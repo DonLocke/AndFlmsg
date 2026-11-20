@@ -11,10 +11,7 @@ keystore.properties
 /build
 /captures
 /import-summary.txt
-/andFlmsg/.externalNativeBuild
 /andFlmsg/build
-/andFlmsg/*.iml
 /aFileDialogoriginal/build
-/aFileDialogoriginal/*.iml
 
 
