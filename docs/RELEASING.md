@@ -29,7 +29,8 @@ export STORE_PASS='<strong store password>'
 export KEY_PASS='<strong key password>'
 
 keytool -genkeypair -v \
-  -keystore andflmsg-release.jks \
+  -keystore andflmsg-release.p12 \
+  -storetype PKCS12 \
   -alias andflmsg \
   -keyalg RSA \
   -keysize 4096 \
@@ -39,19 +40,19 @@ keytool -genkeypair -v \
   -dname "CN=AndFlmsg Release, O=AndFlmsg, C=AU"
 ```
 
-Make an encrypted offline backup of `andflmsg-release.jks` and store the alias
+Make an encrypted offline backup of `andflmsg-release.p12` and store the alias
 and both passwords separately from the key. Losing this key means existing
 installations cannot receive updates signed with the same identity.
 
 Create the secret payload without writing it into the repository:
 
 ```bash
-base64 -w0 andflmsg-release.jks > andflmsg-release.jks.b64
+base64 -w0 andflmsg-release.p12 > andflmsg-release.p12.b64
 ```
 
-Never commit `andflmsg-release.jks`, its base64 form, `keystore.properties`, or
-the passwords. `.gitignore` already excludes `*.jks`, `*.keystore`, and
-`keystore.properties`.
+Never commit `andflmsg-release.p12`, its base64 form, `keystore.properties`, or
+the passwords. `.gitignore` already excludes PKCS12/JKS keystores and their
+base64 forms, plus `keystore.properties`.
 
 ## GitHub Actions secrets
 
@@ -68,7 +69,7 @@ with `gh secret set`):
 Example (run from the directory containing the files, on a trusted machine):
 
 ```bash
-gh secret set ANDROID_KEYSTORE_BASE64 < andflmsg-release.jks.b64
+gh secret set ANDROID_KEYSTORE_BASE64 < andflmsg-release.p12.b64
 gh secret set ANDROID_KEYSTORE_PASSWORD
 gh secret set ANDROID_KEY_ALIAS
 gh secret set ANDROID_KEY_PASSWORD

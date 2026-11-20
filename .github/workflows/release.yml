@@ -98,8 +98,8 @@ jobs:
             exit 1
           fi
           umask 077
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/andflmsg-release.jks"
-          test -s "$RUNNER_TEMP/andflmsg-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/andflmsg-release.p12"
+          test -s "$RUNNER_TEMP/andflmsg-release.p12"
 
       - name: Assemble release APK
         env:
@@ -107,7 +107,7 @@ jobs:
           # directory inside the container so the keystore never touches the
           # workspace.
           ANDFLMSG_EXTRA_VOLUME: ${{ runner.temp }}:${{ runner.temp }}
-          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/andflmsg-release.jks
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/andflmsg-release.p12
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -159,4 +159,4 @@ jobs:
 
       - name: Remove imported keystore
         if: always()
-        run: rm -f "$RUNNER_TEMP/andflmsg-release.jks"
+        run: rm -f "$RUNNER_TEMP/andflmsg-release.p12"
