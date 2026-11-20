@@ -9,3 +9,12 @@ The display and entry forms can be independently modified in order to match the 
 It does basically most of what the fully featured version of FLMSG does.
 
 Installable apk, manuals in the Releases section.
+
+## Crash logs
+
+Crash logs are stored locally at
+`Android/data/com.AndFlmsg/files/Documents/crash-logs/` on external storage,
+or in the app-private files directory if external storage is unavailable.
+On devices where Android permits access to app-specific external storage, the
+logs can be retrieved via USB/MTP or a file manager. Nothing is uploaded
+automatically.

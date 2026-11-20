@@ -35,7 +35,8 @@ import androidx.activity.result.ActivityResultLauncher;
 public class Processor extends Service {
 
 
-    static final String version = "Version " + BuildConfig.VERSION_NAME;
+    static final String version = "Version " + BuildConfig.VERSION_NAME
+            + ", " + BuildConfig.VERSION_DATE;
 
     static boolean onWindows = true;
     static String ModemPreamble = "";  // String to send before any Tx Buffer

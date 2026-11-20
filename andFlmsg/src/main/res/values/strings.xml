@@ -231,9 +231,10 @@
     <string name="txt_arlmessage">ARRLl Message</string>
     <string name="txt_license">
     Open source software under GNU licence.\n\n     Based on Fldigi and Flmsg by David (Dave) Freese (W1HKJ) and team.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-        \nSee the GNU General Public License for more details: https://www.gnu.org/licenses/
+        \nSee the GNU General Public License for more details.
     </string>
     <string name="txt_fork_notice" translatable="false">Community fork of AndFlmsg\nSource: https://github.com/DonLocke/AndFlmsg\nReport issues: https://github.com/DonLocke/AndFlmsg/issues</string>
+    <string name="txt_gpl_url" translatable="false">GNU General Public License: https://www.gnu.org/licenses/</string>
 
     <string name="values_High">High</string>
     <string name="values_Low">Low</string>
