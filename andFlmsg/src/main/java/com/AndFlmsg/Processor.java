@@ -150,9 +150,9 @@ public class Processor extends Service {
         //Display the notification in the system bar at the top at the same time
         startForeground(1, AndFlmsg.myNotification);
 
-        // Keep this service running until it is explicitly stopped, so use sticky.
-        //VK2ETA To-DO: Check if START_STICKY causes the service restart on crash
-        //VK2ETA	return START_STICKY;
+        // Do not let the system auto-restart this service after a crash: it
+        // depends on the Activity-scoped AndFlmsg.myContext and cannot run
+        // without the UI. The Activity starts it again when the app reopens.
         return START_NOT_STICKY;
 
     }
