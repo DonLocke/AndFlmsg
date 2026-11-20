@@ -19,18 +19,39 @@
 
 set -euo pipefail
 
+: "${HOME:?HOME must be set}"
+
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${ANDFLMSG_BUILD_IMAGE:-localhost/andflmsg-build:latest}"
 CONTAINERFILE="${ROOT_DIR}/container/Containerfile"
 IMAGE_STAMP_LABEL="dev.andflmsg.containerfile-sha256"
 
-if command -v sha256sum >/dev/null 2>&1; then
-    CONTAINERFILE_HASH="$(sha256sum "${CONTAINERFILE}" | awk '{print $1}')"
-elif command -v shasum >/dev/null 2>&1; then
-    CONTAINERFILE_HASH="$(shasum -a 256 "${CONTAINERFILE}" | awk '{print $1}')"
-else
-    CONTAINERFILE_HASH="$(cksum "${CONTAINERFILE}" | awk '{print $1 "-" $2}')"
-fi
+hash_stream() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 | awk '{print $1}'
+    else
+        cksum | awk '{print $1 "-" $2}'
+    fi
+}
+
+# Hash the image inputs: the Containerfile plus any other files in the build
+# context (excluding the human-readable README). The current context has no
+# extra files, so this is the same hash as the Containerfile alone, but future
+# COPY instructions cannot silently leave a stale image behind.
+CONTAINERFILE_HASH="$(
+    cd "${ROOT_DIR}/container" || exit 1
+    {
+        cat Containerfile
+        find . -type f ! -name 'Containerfile' ! -name 'README.md' -print \
+            | LC_ALL=C sort \
+            | while IFS= read -r context_file; do
+                  printf '== %s ==\n' "${context_file}"
+                  cat "${context_file}"
+              done
+    } | hash_stream
+)"
 
 if [ -n "${CONTAINER_ENGINE:-}" ]; then
     ENGINE="${CONTAINER_ENGINE}"
@@ -48,7 +69,20 @@ if ! command -v "${ENGINE}" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Rebuild when the image is missing or was built from a different Containerfile.
+# Rootless Docker already maps container root to the invoking host user, so it
+# must not be given an explicit --user (that would map to a subuid and make the
+# bind mounts unwritable).
+is_rootless_docker() {
+    [ "$(basename "${ENGINE}")" = "docker" ] || return 1
+    local security_options
+    security_options="$("${ENGINE}" info --format '{{.SecurityOptions}}' 2>/dev/null)" || return 1
+    case "${security_options}" in
+        *rootless*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Rebuild when the image is missing or was built from different inputs.
 image_is_current() {
     local image_hash
     image_hash="$("${ENGINE}" image inspect \
@@ -63,7 +97,7 @@ if ! image_is_current; then
         -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
 fi
 
-mkdir -p "${HOME}/.gradle"
+mkdir -p "${HOME}/.gradle" "${HOME}/.android"
 
 # Relabel bind mounts when SELinux is enforcing.
 VOLUME_SUFFIX=""
@@ -79,7 +113,6 @@ fi
 RUN_ARGS=(
     --rm
     "${TTY_FLAGS[@]}"
-    --user "$(id -u):$(id -g)"
     -e HOME=/tmp
     -e JAVA_TOOL_OPTIONS=-Duser.home=/tmp
     -e ANDROID_USER_HOME=/tmp/.android
@@ -87,11 +120,20 @@ RUN_ARGS=(
     -e GRADLE_USER_HOME=/gradle-cache
     -v "${ROOT_DIR}:/workspace${VOLUME_SUFFIX}"
     -v "${HOME}/.gradle:/gradle-cache${VOLUME_SUFFIX}"
+    # Persist the Android user home so the debug keystore stays stable across
+    # debug builds. Release signing is handled by CI.
+    -v "${HOME}/.android:/tmp/.android${VOLUME_SUFFIX}"
     -w /workspace
 )
 
-# Docker supports --user directly. Rootless Podman needs keep-id so the
-# container UID maps back to the invoking user on the host.
+# Rootful Docker runs as the invoking UID/GID. Rootless Docker is handled by
+# is_rootless_docker() above.
+if ! is_rootless_docker; then
+    RUN_ARGS+=(--user "$(id -u):$(id -g)")
+fi
+
+# Rootless Podman needs keep-id so the container UID maps back to the invoking
+# user on the host.
 if [ "$(basename "${ENGINE}")" = "podman" ]; then
     RUN_ARGS=(--userns=keep-id "${RUN_ARGS[@]}")
 fi
