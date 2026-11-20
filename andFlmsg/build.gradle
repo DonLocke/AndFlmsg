@@ -33,13 +33,7 @@ android {
    }
 
     buildTypes {
-        // Preserve the old global aaptOptions.cruncherEnabled = false.
-        // crunchPngs is a legacy-DSL property; revisit if AGP 9 removes it.
-        debug {
-            crunchPngs false
-        }
         release {
-            crunchPngs false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt')
             signingConfig signingConfigs.debug
