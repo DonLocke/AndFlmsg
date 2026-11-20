@@ -231,7 +231,6 @@
     <string name="txt_WelcomeToAndFlmsg">Bienvenu à AndFlmsg</string>
     <string name="txt_Yes">Oui</string>
     <string name="txt_arlmessage">Message ARRL</string>
-    <string name="txt_crash_toast_text">S\'il vous plaît envoyez l\'information sur le crash de l\'application a l\'auteur pour aider à la resolution du problème. Merci et 73.</string>
     <string name="txt_license">"     Ce programme est un logiciel libre sous licence GNU.
         \nBasé sur Fldigi et Flmsg par David (Dave) Freese (W1HKJ) et équipe.
         \n\nCe programme est distribué dans l\'espoir qu\'il sera utile, mais SANS AUCUNE GARANTIE ; sans même la garantie tacite de QUALITÉ MARCHANDE ou d\'ADÉQUATION à UN BUT PARTICULIER. Consultez la GNU General Public License pour plus de détails.

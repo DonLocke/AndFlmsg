@@ -227,7 +227,6 @@
     <string name="txt_WelcomeToAndFlmsg">Witamy w AndFlmsg</string>
     <string name="txt_Yes">Tak</string>
     <string name="txt_arlmessage">ARRL Wiadomość</string>
-    <string name="txt_crash_toast_text">Wyślij do autora wiadomość e-mail z informacjami o awarii, aby pomóc w korekcie problemów. Dzięki i 73.</string>
     <string name="txt_license">
     Oprogramowanie open source na licencji GNU.\n\n     Na podstawie Fldigi i Flmsg by David (Dave) Freese (W1HKJ) i zespół.\n\Ten program jest rozpowszechniany z nadzieją, że będzie przydatny, ale BEZ JAKIEJKOLWIEK GWARANCJI; nawet domyślnej gwarancji PRZYDATNOŚCI HANDLOWEJ lub PRZYDATNOŚCI DO OKREŚLONYCH CELÓW.
         \nCzytaj Powszechną Licencję Publiczną GNU, aby uzyskać więcej informacji.
