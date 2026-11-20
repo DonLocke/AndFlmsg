@@ -27,6 +27,7 @@ android {
         versionCode 2
         versionName "1.7.0.0"
         // Release date for versionName, displayed by Processor.version.
+        // Keep this in sync with versionName when publishing a release.
         buildConfigField "String", "VERSION_DATE", "\"20250909\""
         externalNativeBuild {
             ndkBuild {
