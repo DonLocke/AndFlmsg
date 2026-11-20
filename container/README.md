@@ -39,12 +39,19 @@ For an interactive shell:
 
 - Eclipse Temurin JDK 17 (base image pinned by digest)
 - Android command-line tools `15859902` (SHA-256 verified)
-- Platform `android-33`
-- Build tools `33.0.2`
+- Platform `android-35` (compileSdk 35, targetSdk 33)
+- Build tools `35.0.0`
+- Platform tools `37.0.3` (SHA-256 verified)
 - NDK `21.4.7075529` (r21e)
 
-The SDK and NDK versions are also set in `andFlmsg/build.gradle`, and they are
-preinstalled in the image. Bump them in both places and rebuild the image.
+The Gradle wrapper pins Gradle `8.9` and Android Gradle Plugin `8.7.3`.
+The SDK and NDK versions are also set in `andFlmsg/build.gradle` (or the
+Containerfile for platform tools), and they are preinstalled in the image.
+Platform tools is installed by the Containerfile rather than `sdkmanager`, so
+the pinned version cannot be silently replaced. Bump the versions in both
+places and rebuild the image.
+
+Building without the container requires JDK 17; AGP 8.7 does not run on JDK 11.
 
 ## Local vs release builds
 

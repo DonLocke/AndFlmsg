@@ -1,6 +1,3 @@
 rootProject.name = 'AndFlmsg'
 
-// aFileDialogoriginal is no longer built: the app only references it from
-// commented-out code, and the module has no namespace, so it cannot be
-// re-enabled under AGP 7.4 as-is. It is kept for reference only.
 include ':andFlmsg'

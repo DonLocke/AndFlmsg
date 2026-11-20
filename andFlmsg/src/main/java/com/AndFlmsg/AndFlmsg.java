@@ -2252,94 +2252,85 @@ public class AndFlmsg extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(
                 AndFlmsg.this);
-        switch (item.getItemId()) {
-            case R.id.prefs:
-                Intent OptionsActivity = new Intent(AndFlmsg.this,
-                        myPreferences.class);
-                startActivity(OptionsActivity);
-                break;
-            case R.id.savePreferences:
-                config.saveSharedPreferencesToFile("SettingsBackup.bin");
-                break;
-            case R.id.restorePreferences:
-                config.loadSharedPreferencesFromFile("SettingsBackup.bin");
-                break;
-            case R.id.defaultPreferences:
-                config.restoreSettingsToDefault();
-                break;
-            case R.id.BTon:
-                // mBluetoothHeadset.startVoiceRecognition();
-                if (mBluetoothAdapter != null) {
-                    // Code that works (Manual connect to BT device)
-                    if (android.os.Build.VERSION.SDK_INT >= 8) {
-                        mAudioManager.startBluetoothSco();
-                    }
-                    mAudioManager.setMode(AudioManager.MODE_IN_CALL);
-                    mAudioManager.setBluetoothScoOn(true);
-                    toBluetooth = true;
-                }
-                break;
-            case R.id.BToff:
-                toBluetooth = false;
-                mAudioManager.setMode(AudioManager.MODE_NORMAL);
-                mAudioManager.setBluetoothScoOn(false);
+        int itemId = item.getItemId();
+        if (itemId == R.id.prefs) {
+            Intent OptionsActivity = new Intent(AndFlmsg.this,
+                    myPreferences.class);
+            startActivity(OptionsActivity);
+        } else if (itemId == R.id.savePreferences) {
+            config.saveSharedPreferencesToFile("SettingsBackup.bin");
+        } else if (itemId == R.id.restorePreferences) {
+            config.loadSharedPreferencesFromFile("SettingsBackup.bin");
+        } else if (itemId == R.id.defaultPreferences) {
+            config.restoreSettingsToDefault();
+        } else if (itemId == R.id.BTon) {
+            // mBluetoothHeadset.startVoiceRecognition();
+            if (mBluetoothAdapter != null) {
+                // Code that works (Manual connect to BT device)
                 if (android.os.Build.VERSION.SDK_INT >= 8) {
-                    mAudioManager.stopBluetoothSco();
+                    mAudioManager.startBluetoothSco();
                 }
-                break;
-            case R.id.reloadforms:
-                myAlertDialog.setMessage(getString(R.string.txt_AreYouSureOverwriteForms));
-                myAlertDialog.setCancelable(false);
-                myAlertDialog.setPositiveButton(getString(R.string.txt_Yes), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // First clear the flag
-                        SharedPreferences.Editor editor = AndFlmsg.mysp.edit();
-                        editor.putBoolean("HAVERUNONCEBEFORE", false);
-                        // Commit the edits!
-                        editor.commit();
-                        Processor.handlefolderstructure();
-                    }
-                });
-                myAlertDialog.setNegativeButton(getString(R.string.txt_No), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-                myAlertDialog.show();
-                break;
-            case R.id.exit:
-                myAlertDialog.setMessage(getString(R.string.txt_AreYouSureExit));
-                myAlertDialog.setCancelable(false);
-                myAlertDialog.setPositiveButton(getString(R.string.txt_Yes),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                // Toast.makeText(this, "GoodBye", Toast.LENGTH_SHORT).show();
-                                // Stop the Modem and Listening Service
-                                if (ProcessorON) {
-                                    stopService(new Intent(AndFlmsg.this,
-                                            Processor.class));
-                                    ProcessorON = false;
-                                }
-                                // Stop the GPS if running
-                                //if (locationManager != null) {
-                                //    locationManager.removeUpdates(locationListener);
-                                //}
-                                // Close that activity and return to previous screen
-                                finish();
-                                // Kill the process
-                                android.os.Process.killProcess(android.os.Process.myPid());
+                mAudioManager.setMode(AudioManager.MODE_IN_CALL);
+                mAudioManager.setBluetoothScoOn(true);
+                toBluetooth = true;
+            }
+        } else if (itemId == R.id.BToff) {
+            toBluetooth = false;
+            mAudioManager.setMode(AudioManager.MODE_NORMAL);
+            mAudioManager.setBluetoothScoOn(false);
+            if (android.os.Build.VERSION.SDK_INT >= 8) {
+                mAudioManager.stopBluetoothSco();
+            }
+        } else if (itemId == R.id.reloadforms) {
+            myAlertDialog.setMessage(getString(R.string.txt_AreYouSureOverwriteForms));
+            myAlertDialog.setCancelable(false);
+            myAlertDialog.setPositiveButton(getString(R.string.txt_Yes), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // First clear the flag
+                    SharedPreferences.Editor editor = AndFlmsg.mysp.edit();
+                    editor.putBoolean("HAVERUNONCEBEFORE", false);
+                    // Commit the edits!
+                    editor.commit();
+                    Processor.handlefolderstructure();
+                }
+            });
+            myAlertDialog.setNegativeButton(getString(R.string.txt_No), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                }
+            });
+            myAlertDialog.show();
+        } else if (itemId == R.id.exit) {
+            myAlertDialog.setMessage(getString(R.string.txt_AreYouSureExit));
+            myAlertDialog.setCancelable(false);
+            myAlertDialog.setPositiveButton(getString(R.string.txt_Yes),
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // Toast.makeText(this, "GoodBye", Toast.LENGTH_SHORT).show();
+                            // Stop the Modem and Listening Service
+                            if (ProcessorON) {
+                                stopService(new Intent(AndFlmsg.this,
+                                        Processor.class));
+                                ProcessorON = false;
                             }
-                        });
-                myAlertDialog.setNegativeButton(getString(R.string.txt_No), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-                myAlertDialog.show();
-                break;
-            case R.id.About:
-                displayAbout();
-                break;
+                            // Stop the GPS if running
+                            //if (locationManager != null) {
+                            //    locationManager.removeUpdates(locationListener);
+                            //}
+                            // Close that activity and return to previous screen
+                            finish();
+                            // Kill the process
+                            android.os.Process.killProcess(android.os.Process.myPid());
+                        }
+                    });
+            myAlertDialog.setNegativeButton(getString(R.string.txt_No), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                }
+            });
+            myAlertDialog.show();
+        } else if (itemId == R.id.About) {
+            displayAbout();
         }
         return true;
     }
@@ -2719,43 +2710,6 @@ public class AndFlmsg extends AppCompatActivity {
     public static final int header_reason_NEW = 1;
     public static final int header_reason_CHANGED = 2;
     public static final int header_reason_FROM = 3;
-
-
-
-/* Not used anymore; kept for reference
- *
- Used with this calling section of code:
- 	     FileChooserDialog folderDialog = new FileChooserDialog(AndFlmsg.myContext);
-	    folderDialog.loadFolder(Processor.HomePath +
-			Processor.Dirprefix + Processor.DirImages);
-	    folderDialog.setFolderMode(false);
-	    folderDialog.setFilter(".+\\.png$|.+\\.PNG$|.+\\.jpg$|.+\\.JPG$");
-	    folderDialog.setShowOnlySelectable(true);
-	    folderDialog.addListener(onImageSelectedListener);
-	    folderDialog.show();
-
-    // Handling of selected folder//
-    private static FileChooserDialog.OnFileSelectedListener onImageSelectedListener = new FileChooserDialog.OnFileSelectedListener() {
-	public void onFileSelected(Dialog source, File file) {
-	    source.hide();
-	    final File myImageFile = file;
-	    ((Activity) AndFlmsg.myContext).runOnUiThread(new Runnable() {
-		public void run() {
-		    String jsAction = "javascript:setSource('"
-			    + _imgFieldToUpdate + "','" + "file://" + myImageFile.getAbsoluteFile().getAbsolutePath() + "')";
-		    mWebView.loadUrl(jsAction);
-		}
-	    });
-
-
-	}
-	public void onFileSelected(Dialog source, File folder, String name) {
-	    source.hide();
-	    Toast toast = Toast.makeText(AndFlmsg.myContext, "ERROR: Should not ask to create file: " + folder.getName() + "/" + name, Toast.LENGTH_LONG);
-	    toast.show();
-	}
-    };
-*/
 
 
     // Allows Javascript to call Android methods for submitting form data,
@@ -4785,19 +4739,15 @@ public class AndFlmsg extends AppCompatActivity {
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked
-        switch (view.getId()) {
-            case R.id.forPrinting:
-                if (checked)
-                    sharingAction = FORPRINTING;
-                break;
-            case R.id.forSendingAsAttachment:
-                if (checked)
-                    sharingAction = FORSENDINGASATTACHMENT;
-                break;
-            case R.id.forSendingAsText:
-                if (checked)
-                    sharingAction = FORSENDINGASTEXT;
-                break;
+        if (checked) {
+            int viewId = view.getId();
+            if (viewId == R.id.forPrinting) {
+                sharingAction = FORPRINTING;
+            } else if (viewId == R.id.forSendingAsAttachment) {
+                sharingAction = FORSENDINGASATTACHMENT;
+            } else if (viewId == R.id.forSendingAsText) {
+                sharingAction = FORSENDINGASTEXT;
+            }
         }
     }
 
