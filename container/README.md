@@ -39,13 +39,15 @@ For an interactive shell:
 
 - Eclipse Temurin JDK 17 (base image pinned by digest)
 - Android command-line tools `15859902` (SHA-256 verified)
-- Gradle `8.9` / Android Gradle Plugin `8.7.3`
 - Platform `android-35` (compileSdk 35, targetSdk 33)
 - Build tools `35.0.0`
+- Platform tools `37.0.3` (SHA-256 verified)
 - NDK `21.4.7075529` (r21e)
 
-The SDK and NDK versions are also set in `andFlmsg/build.gradle`, and they are
-preinstalled in the image. Bump them in both places and rebuild the image.
+The Gradle wrapper pins Gradle `8.9` and Android Gradle Plugin `8.7.3`.
+The SDK and NDK versions are also set in `andFlmsg/build.gradle` (or the
+Containerfile for platform tools), and they are preinstalled in the image.
+Bump them in both places and rebuild the image.
 
 ## Local vs release builds
 
