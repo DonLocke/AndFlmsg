@@ -10,8 +10,9 @@
 #   ./scripts/container-build.sh bash
 #   CONTAINER_ENGINE=docker ./scripts/container-build.sh :andFlmsg:assembleDebug
 #
-# A project task such as ":andFlmsg:assembleDebug" is passed to ./gradlew
-# automatically. Other commands, including "bash", are run unchanged.
+# A fully qualified project task such as ":andFlmsg:assembleDebug" is passed
+# to ./gradlew automatically (the leading ":" is required, or prefix the task
+# with "gradle"). Other commands, including "bash", are run unchanged.
 
 set -euo pipefail
 
@@ -73,18 +74,20 @@ RUN_ARGS=(
     -e HOME=/tmp
     -e JAVA_TOOL_OPTIONS=-Duser.home=/tmp
     -e ANDROID_USER_HOME=/tmp/.android
-    -e ANDROID_SDK_HOME=/tmp
     -e GRADLE_USER_HOME=/gradle-cache
     -v "${ROOT_DIR}:/workspace${VOLUME_SUFFIX}"
     -v "${HOME}/.gradle:/gradle-cache${VOLUME_SUFFIX}"
     # Persist the Android user home so the debug keystore stays stable across
-    # debug builds. Release signing is handled by CI.
+    # debug builds. Release signing is not configured here; see
+    # container/README.md.
     -v "${HOME}/.android:/tmp/.android${VOLUME_SUFFIX}"
     -w /workspace
 )
 
-# Rootful Docker runs as the invoking UID/GID. Rootless Docker is handled above.
-if ! is_rootless_docker; then
+# Rootful Docker runs as the invoking UID/GID. Rootless Docker maps container
+# root to the invoking user, and Podman uses keep-id below, so neither needs an
+# explicit --user.
+if [ "$(basename "${ENGINE}")" = "docker" ] && ! is_rootless_docker; then
     RUN_ARGS+=(--user "$(id -u):$(id -g)")
 fi
 

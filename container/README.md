@@ -19,6 +19,10 @@ inside it:
 
 The debug APK is written to `andFlmsg/build/outputs/apk/debug/`.
 
+Task names must be fully qualified: the leading `:` (or a `gradle` prefix) is
+what tells the wrapper to run the command through `./gradlew`. A bare task such
+as `assembleDebug` is treated as a container command and fails.
+
 Select an engine explicitly:
 
 ```bash
@@ -42,17 +46,21 @@ For an interactive shell:
 
 ## Local vs release builds
 
-Use `assembleDebug` locally. The local `assembleRelease` target currently uses
-the debug signing config and is only for build testing; do not distribute it.
-Publishable release APKs will be built in GitHub Actions with a dedicated
-release keystore.
+Use `:andFlmsg:assembleDebug` locally. The local `:andFlmsg:assembleRelease`
+target currently uses the debug signing config and is only for build testing;
+do not distribute it.
+
+There is no CI release workflow yet; publishable release APKs will be built in
+CI with a dedicated release keystore once that workflow exists.
 
 ## Engine notes
 
 Both engines run the container as your UID/GID, so build outputs and the
 Gradle cache stay owned by you:
 
-- **Podman:** uses `--userns=keep-id`.
+- **Podman:** uses `--userns=keep-id`, which maps the invoking user to the
+  same UID/GID inside the container. Rootful Podman (running the wrapper as
+  root) is not supported.
 - **Docker:** uses `--user "$(id -u):$(id -g)"` for a rootful daemon; for
   rootless Docker the wrapper omits it because container root already maps to
   the invoking user.

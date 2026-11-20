@@ -3,6 +3,10 @@ apply plugin: 'com.android.application'
 android {
     namespace 'com.AndFlmsg'
 
+    // BuildConfig is enabled by default in AGP 7.4, but AndFlmsg.java uses
+    // BuildConfig.APPLICATION_ID. Re-add buildFeatures { buildConfig true }
+    // before upgrading to AGP 8, which disables BuildConfig by default.
+
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
