@@ -1,11 +1,11 @@
 # Containerized build environment
 
 Build AndFlmsg without installing a JDK, Android SDK, or NDK on the host.
-Works with Podman or Docker.
+The wrapper supports Podman and Docker; Podman is the tested path.
 
 ## Requirements
 
-- Podman **or** Docker
+- Podman (tested) or Docker (path implemented, not yet exercised)
 - Network access for the first image build
 
 ## Build and run
@@ -44,6 +44,9 @@ For an interactive shell:
 - Build tools `33.0.2`
 - NDK `21.4.7075529` (r21e)
 
+The SDK and NDK versions are also set in `andFlmsg/build.gradle`, and they are
+preinstalled in the image. Bump them in both places and rebuild the image.
+
 ## Local vs release builds
 
 Use `:andFlmsg:assembleDebug` locally. The local `:andFlmsg:assembleRelease`
@@ -55,17 +58,17 @@ CI with a dedicated release keystore once that workflow exists.
 
 ## Engine notes
 
-Both engines run the container as your UID/GID, so build outputs and the
-Gradle cache stay owned by you:
+The wrapper arranges the run so build outputs and the Gradle cache stay owned
+by you:
 
 - **Podman:** uses `--userns=keep-id`, which maps the invoking user to the
   same UID/GID inside the container. Rootful Podman (running the wrapper as
   root) is not supported.
 - **Docker:** uses `--user "$(id -u):$(id -g)"` for a rootful daemon; for
   rootless Docker the wrapper omits it because container root already maps to
-  the invoking user.
-- **SELinux:** the wrapper adds `:Z` to bind mounts automatically when
-  `getenforce` reports `Enforcing`.
+  the invoking user. This path is implemented but has not been exercised yet.
+- **SELinux:** when `getenforce` reports `Enforcing`, the workspace is mounted
+  with `:Z` and the shared caches with `:z`.
 
 The host Gradle cache and `~/.android` are mounted so dependencies and the
 debug keystore persist between runs.

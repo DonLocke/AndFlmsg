@@ -44,10 +44,14 @@ fi
 
 mkdir -p "${HOME}/.gradle" "${HOME}/.android"
 
-# Relabel bind mounts when SELinux is enforcing.
-VOLUME_SUFFIX=""
+# Relabel bind mounts when SELinux is enforcing. The workspace is private to
+# the container (:Z); the caches are shared with the host (:z) so they are not
+# relabelled with a new private category on every run.
+WORKSPACE_SUFFIX=""
+CACHE_SUFFIX=""
 if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" = "Enforcing" ]; then
-    VOLUME_SUFFIX=":Z"
+    WORKSPACE_SUFFIX=":Z"
+    CACHE_SUFFIX=":z"
 fi
 
 TTY_FLAGS=(-i)
@@ -75,12 +79,12 @@ RUN_ARGS=(
     -e JAVA_TOOL_OPTIONS=-Duser.home=/tmp
     -e ANDROID_USER_HOME=/tmp/.android
     -e GRADLE_USER_HOME=/gradle-cache
-    -v "${ROOT_DIR}:/workspace${VOLUME_SUFFIX}"
-    -v "${HOME}/.gradle:/gradle-cache${VOLUME_SUFFIX}"
+    -v "${ROOT_DIR}:/workspace${WORKSPACE_SUFFIX}"
+    -v "${HOME}/.gradle:/gradle-cache${CACHE_SUFFIX}"
     # Persist the Android user home so the debug keystore stays stable across
     # debug builds. Release signing is not configured here; see
     # container/README.md.
-    -v "${HOME}/.android:/tmp/.android${VOLUME_SUFFIX}"
+    -v "${HOME}/.android:/tmp/.android${CACHE_SUFFIX}"
     -w /workspace
 )
 

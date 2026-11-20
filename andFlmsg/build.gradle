@@ -11,6 +11,8 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    // Keep compileSdk, buildToolsVersion, and ndkVersion in sync with
+    // container/Containerfile: the image installs exactly these versions.
     compileSdkVersion 33
     buildToolsVersion "33.0.2"
     ndkVersion "21.4.7075529"
