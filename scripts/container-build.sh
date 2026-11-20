@@ -11,6 +11,9 @@
 #   ./scripts/container-build.sh bash
 #   CONTAINER_ENGINE=docker ./scripts/container-build.sh :andFlmsg:assembleDebug
 #
+# A project task such as ":andFlmsg:assembleDebug" is passed to ./gradlew
+# automatically. Other commands, including "bash", are run unchanged.
+#
 # The image is built on first use. Nothing (JDK, Android SDK, NDK) is
 # installed on the host.
 
@@ -58,6 +61,9 @@ RUN_ARGS=(
     "${TTY_FLAGS[@]}"
     --user "$(id -u):$(id -g)"
     -e HOME=/tmp
+    -e JAVA_TOOL_OPTIONS=-Duser.home=/tmp
+    -e ANDROID_USER_HOME=/tmp/.android
+    -e ANDROID_SDK_HOME=/tmp
     -e GRADLE_USER_HOME=/gradle-cache
     -v "${ROOT_DIR}:/workspace${VOLUME_SUFFIX}"
     -v "${HOME}/.gradle:/gradle-cache${VOLUME_SUFFIX}"
@@ -66,12 +72,28 @@ RUN_ARGS=(
 
 # Docker supports --user directly. Rootless Podman needs keep-id so the
 # container UID maps back to the invoking user on the host.
-if [ "${ENGINE}" = "podman" ]; then
+if [ "$(basename "${ENGINE}")" = "podman" ]; then
     RUN_ARGS=(--userns=keep-id "${RUN_ARGS[@]}")
 fi
 
 if [ "$#" -eq 0 ]; then
     set -- bash
 fi
+
+# Run Gradle tasks through the wrapper. Using "bash ./gradlew" keeps this
+# working even when the checked-out gradlew lacks the executable bit.
+case "$1" in
+    gradle)
+        shift
+        set -- bash ./gradlew "$@"
+        ;;
+    :*)
+        set -- bash ./gradlew "$@"
+        ;;
+    ./gradlew|gradlew)
+        shift
+        set -- bash ./gradlew "$@"
+        ;;
+esac
 
 exec "${ENGINE}" run "${RUN_ARGS[@]}" "${IMAGE}" "$@"

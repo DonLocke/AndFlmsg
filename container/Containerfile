@@ -7,26 +7,30 @@
 # Run via the wrapper (auto-detects Podman or Docker):
 #   ./scripts/container-build.sh :andFlmsg:assembleDebug
 
-FROM docker.io/library/eclipse-temurin:17-jdk-jammy@sha256:96ac8197b2cbc2bb0f9fbcbf91dbb0015f43b3c76a1cb351892da12e7bb91bed
-
 ARG ANDROID_CMDLINE_TOOLS=15859902
-ARG ANDROID_PLATFORM=android-35
-ARG ANDROID_BUILD_TOOLS=35.0.0
-ARG ANDROID_NDK=25.2.9519653
+ARG ANDROID_PLATFORM=android-33
+ARG ANDROID_BUILD_TOOLS=33.0.2
+ARG ANDROID_NDK=21.4.7075529
+
+# The Android command-line tools require JDK 17, so install the SDK in a
+# separate stage. The final image uses JDK 11, which is compatible with the
+# project's Gradle 7.5.1 wrapper and AGP 7.4.2.
+FROM docker.io/library/eclipse-temurin:17-jdk-jammy@sha256:96ac8197b2cbc2bb0f9fbcbf91dbb0015f43b3c76a1cb351892da12e7bb91bed AS sdk
+
+ARG ANDROID_CMDLINE_TOOLS
+ARG ANDROID_PLATFORM
+ARG ANDROID_BUILD_TOOLS
+ARG ANDROID_NDK
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     ANDROID_HOME=/opt/android-sdk \
-    ANDROID_SDK_ROOT=/opt/android-sdk \
-    ANDROID_NDK_HOME=/opt/android-sdk/ndk/${ANDROID_NDK} \
-    GRADLE_USER_HOME=/root/.gradle
+    ANDROID_SDK_ROOT=/opt/android-sdk
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
-        git \
-        make \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -49,7 +53,28 @@ RUN yes | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses >/dev/null \
         "ndk;${ANDROID_NDK}" \
     && rm -rf "${HOME}/.android/cache"
 
-ENV PATH="${ANDROID_NDK_HOME}:${PATH}"
+FROM docker.io/library/eclipse-temurin:11-jdk-jammy@sha256:56baf52be9510d77b5eaca50f3b0d5b4553ceffe6f98a52d4c82b5f4c73c5b82
+
+ARG ANDROID_NDK
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    ANDROID_HOME=/opt/android-sdk \
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_NDK_HOME=/opt/android-sdk/ndk/${ANDROID_NDK} \
+    GRADLE_USER_HOME=/root/.gradle
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        file \
+        git \
+        make \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=sdk /opt/android-sdk /opt/android-sdk
+
+ENV PATH="${ANDROID_NDK_HOME}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
 
 WORKDIR /workspace
 
