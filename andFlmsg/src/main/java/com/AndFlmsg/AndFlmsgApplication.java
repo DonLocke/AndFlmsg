@@ -66,11 +66,19 @@ public class AndFlmsgApplication extends Application {
             Log.w(TAG, "External storage unavailable for crash log", t);
         }
 
-        if (writeCrashLog(externalBase, timestamp, thread, throwable, now)) {
-            return;
+        try {
+            if (writeCrashLog(externalBase, timestamp, thread, throwable, now)) {
+                return;
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to write external crash log", t);
         }
 
-        writeCrashLog(getFilesDir(), timestamp, thread, throwable, now);
+        try {
+            writeCrashLog(getFilesDir(), timestamp, thread, throwable, now);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to write internal crash log", t);
+        }
     }
 
     private boolean writeCrashLog(File base, String timestamp, Thread thread,
@@ -80,7 +88,7 @@ public class AndFlmsgApplication extends Application {
         }
 
         File dir = new File(base, CRASH_DIR);
-        if (!dir.exists() && !dir.mkdirs()) {
+        if (!dir.isDirectory() && !dir.mkdirs() && !dir.isDirectory()) {
             Log.e(TAG, "Could not create crash log directory: " + dir);
             return false;
         }
@@ -102,15 +110,17 @@ public class AndFlmsgApplication extends Application {
             writer.println();
             throwable.printStackTrace(writer);
             writer.flush();
+            writer.close();
             if (writer.checkError()) {
                 Log.e(TAG, "Failed to write crash log: " + logFile);
                 return false;
             }
+            writer = null;
 
             success = true;
             synchronized (PRUNE_LOCK) {
                 try {
-                    pruneOldLogs(dir);
+                    pruneOldLogs(dir, logFile);
                 } catch (Throwable t) {
                     Log.w(TAG, "Failed to prune old crash logs", t);
                 }
@@ -140,7 +150,7 @@ public class AndFlmsgApplication extends Application {
         return logFile;
     }
 
-    private void pruneOldLogs(File dir) {
+    private void pruneOldLogs(File dir, File keep) {
         File[] logs = dir.listFiles((d, name) ->
                 name.startsWith("crash-") && name.endsWith(".txt"));
         if (logs == null || logs.length <= MAX_CRASH_LOGS) {
@@ -150,8 +160,13 @@ public class AndFlmsgApplication extends Application {
         Arrays.sort(logs, (first, second) ->
                 first.getName().compareTo(second.getName()));
         int deleteCount = logs.length - MAX_CRASH_LOGS;
-        for (int i = 0; i < deleteCount; i++) {
-            if (!logs[i].delete()) {
+        for (int i = 0; i < logs.length && deleteCount > 0; i++) {
+            if (logs[i].equals(keep)) {
+                continue;
+            }
+            if (logs[i].delete()) {
+                deleteCount--;
+            } else {
                 Log.w(TAG, "Could not delete old crash log: " + logs[i]);
             }
         }
