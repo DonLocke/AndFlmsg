@@ -22,6 +22,15 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${ANDFLMSG_BUILD_IMAGE:-localhost/andflmsg-build:latest}"
 CONTAINERFILE="${ROOT_DIR}/container/Containerfile"
+IMAGE_STAMP_LABEL="dev.andflmsg.containerfile-sha256"
+
+if command -v sha256sum >/dev/null 2>&1; then
+    CONTAINERFILE_HASH="$(sha256sum "${CONTAINERFILE}" | awk '{print $1}')"
+elif command -v shasum >/dev/null 2>&1; then
+    CONTAINERFILE_HASH="$(shasum -a 256 "${CONTAINERFILE}" | awk '{print $1}')"
+else
+    CONTAINERFILE_HASH="$(cksum "${CONTAINERFILE}" | awk '{print $1 "-" $2}')"
+fi
 
 if [ -n "${CONTAINER_ENGINE:-}" ]; then
     ENGINE="${CONTAINER_ENGINE}"
@@ -39,8 +48,19 @@ if ! command -v "${ENGINE}" >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! "${ENGINE}" image inspect "${IMAGE}" >/dev/null 2>&1; then
-    "${ENGINE}" build -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
+# Rebuild when the image is missing or was built from a different Containerfile.
+image_is_current() {
+    local image_hash
+    image_hash="$("${ENGINE}" image inspect \
+        --format "{{ if .Config.Labels }}{{ index .Config.Labels \"${IMAGE_STAMP_LABEL}\" }}{{ end }}" \
+        "${IMAGE}" 2>/dev/null)" || return 1
+    [ "${image_hash}" = "${CONTAINERFILE_HASH}" ]
+}
+
+if ! image_is_current; then
+    "${ENGINE}" build \
+        --label "${IMAGE_STAMP_LABEL}=${CONTAINERFILE_HASH}" \
+        -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
 fi
 
 mkdir -p "${HOME}/.gradle"

@@ -74,7 +74,7 @@ RUN apt-get update \
 
 COPY --from=sdk /opt/android-sdk /opt/android-sdk
 
-ENV PATH="${ANDROID_NDK_HOME}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
+ENV PATH="${ANDROID_NDK_HOME}:${ANDROID_HOME}/platform-tools:${PATH}"
 
 WORKDIR /workspace
 

@@ -70,7 +70,8 @@ For an interactive shell:
 ./scripts/container-build.sh ndk-build --version
 ```
 
-`sdkmanager` requires JDK 17 and is only used while building the image.
+`sdkmanager` requires JDK 17; it is used only while building the image and is
+not on the runtime `PATH`.
 
 ## Engine notes
 
@@ -84,5 +85,5 @@ Gradle cache stay owned by you:
 - **SELinux:** the wrapper adds `:Z` to bind mounts automatically when
   `getenforce` reports `Enforcing`.
 
-The image is built once and cached by the engine. Rebuild it after changing
-the versions in `Containerfile`.
+The image is cached by the engine. The wrapper rebuilds it automatically when
+`Containerfile` changes, so no manual step is needed after updating a pin.
