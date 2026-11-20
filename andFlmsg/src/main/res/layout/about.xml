@@ -13,14 +13,25 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content"
 				android:textSize="18sp" android:padding="5dp"
 				android:text="                AndFlmsg\n
-        by John Douyere (VK2ETA)" />
+        Original by John Douyere (VK2ETA)" />
 			<TextView 
 				android:id="@+id/versiontextview" android:layout_width="fill_parent" android:layout_height="wrap_content"
 				android:textSize="18sp" android:padding="5dp" android:layout_weight="0.13"/>
+			<TextView
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:textSize="16sp" android:padding="5dp"
+				android:autoLink="web"
+				android:text="@string/txt_fork_notice" />
 			<TextView 
 				android:layout_width="fill_parent" android:layout_height="wrap_content"
 				android:textSize="18sp" android:padding="5dp"
+				android:autoLink="web"
 				android:text="@string/txt_license" />
+			<TextView
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:textSize="16sp" android:padding="5dp"
+				android:autoLink="web"
+				android:text="@string/txt_gpl_url" />
 			<LinearLayout android:id="@+id/FrameLayout2"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"

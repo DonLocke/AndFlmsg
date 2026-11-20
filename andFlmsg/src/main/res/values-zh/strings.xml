@@ -264,9 +264,6 @@
     <string name="txt_WelcomeToAndFlmsg">欢迎来到AndFlmsg</string>
     <string name="txt_Yes">是</string>
     <string name="txt_arlmessage">ARRLl消息</string>
-    <string name="txt_crash_toast_text">
-请把软件使用问题通过电子邮件向作者反应，以帮助解决问题。 谢谢，73。
-    </string>
     <string name="txt_license">
 \n\n基于David（Dave）Freese（W1HKJ）和团队的Fldigi和Flmsg开发。\n\n发布本程序的目的是希望它会有用，但不作任何保证；甚至没有对适用性或特定用途适用性的暗示保证。 \n有关更多详细信息，请参见GNU通用公共许可证。
     </string>

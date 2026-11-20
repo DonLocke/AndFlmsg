@@ -35,8 +35,8 @@ import androidx.activity.result.ActivityResultLauncher;
 public class Processor extends Service {
 
 
-    static String application = "AndFlmsg 1.7.0.0"; // Used to preset an empty status
-    static String version = "Version 1.7.0.0, 20250909";
+    static final String version = "Version " + BuildConfig.VERSION_NAME
+            + ", " + BuildConfig.VERSION_DATE;
 
     static boolean onWindows = true;
     static String ModemPreamble = "";  // String to send before any Tx Buffer
@@ -150,9 +150,9 @@ public class Processor extends Service {
         //Display the notification in the system bar at the top at the same time
         startForeground(1, AndFlmsg.myNotification);
 
-        // Keep this service running until it is explicitly stopped, so use sticky.
-        //VK2ETA To-DO: Check if START_STICKY causes the service restart on ACRA report
-        //VK2ETA	return START_STICKY;
+        // Do not let the system auto-restart this service after a crash: it
+        // depends on the Activity-scoped AndFlmsg.myContext and cannot run
+        // without the UI. The Activity starts it again when the app reopens.
         return START_NOT_STICKY;
 
     }
