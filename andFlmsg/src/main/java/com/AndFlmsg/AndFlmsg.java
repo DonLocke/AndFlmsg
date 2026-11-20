@@ -4776,16 +4776,15 @@ public class AndFlmsg extends AppCompatActivity {
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked
-        int viewId = view.getId();
-        if (viewId == R.id.forPrinting) {
-            if (checked)
+        if (checked) {
+            int viewId = view.getId();
+            if (viewId == R.id.forPrinting) {
                 sharingAction = FORPRINTING;
-        } else if (viewId == R.id.forSendingAsAttachment) {
-            if (checked)
+            } else if (viewId == R.id.forSendingAsAttachment) {
                 sharingAction = FORSENDINGASATTACHMENT;
-        } else if (viewId == R.id.forSendingAsText) {
-            if (checked)
+            } else if (viewId == R.id.forSendingAsText) {
                 sharingAction = FORSENDINGASTEXT;
+            }
         }
     }
 

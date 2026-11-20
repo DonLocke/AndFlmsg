@@ -19,7 +19,8 @@ import android.app.Application;
         mailTo = "vk2eta@gmail.com",
         customReportContent = {ReportField.ANDROID_VERSION, ReportField.PHONE_MODEL, ReportField.CUSTOM_DATA, ReportField.STACK_TRACE, ReportField.LOGCAT},
         mode = ReportingInteractionMode.TOAST,
-        forceCloseDialogAfterToast = true) // optional, default false
+        // forceCloseDialogAfterToast is optional and defaults to false.
+        forceCloseDialogAfterToast = true)
 
 
 public class AndFlmsgDebug extends Application {

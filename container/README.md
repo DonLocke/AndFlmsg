@@ -47,7 +47,11 @@ For an interactive shell:
 The Gradle wrapper pins Gradle `8.9` and Android Gradle Plugin `8.7.3`.
 The SDK and NDK versions are also set in `andFlmsg/build.gradle` (or the
 Containerfile for platform tools), and they are preinstalled in the image.
-Bump them in both places and rebuild the image.
+Platform tools is installed by the Containerfile rather than `sdkmanager`, so
+the pinned version cannot be silently replaced. Bump the versions in both
+places and rebuild the image.
+
+Building without the container requires JDK 17; AGP 8.7 does not run on JDK 11.
 
 ## Local vs release builds
 
