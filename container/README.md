@@ -39,8 +39,9 @@ For an interactive shell:
 
 - Eclipse Temurin JDK 17 (base image pinned by digest)
 - Android command-line tools `15859902` (SHA-256 verified)
-- Platform `android-33`
-- Build tools `33.0.2`
+- Gradle `8.9` / Android Gradle Plugin `8.7.3`
+- Platform `android-35` (compileSdk 35, targetSdk 33)
+- Build tools `35.0.0`
 - NDK `21.4.7075529` (r21e)
 
 The SDK and NDK versions are also set in `andFlmsg/build.gradle`, and they are
