@@ -7,7 +7,7 @@
 #   podman run --rm -v "$PWD:/workspace:Z" -w /workspace localhost/andflmsg-build:latest \
 #       ./gradlew :andFlmsg:assembleDebug
 
-FROM docker.io/library/eclipse-temurin:17-jdk-jammy
+FROM docker.io/library/eclipse-temurin:17-jdk-jammy@sha256:96ac8197b2cbc2bb0f9fbcbf91dbb0015f43b3c76a1cb351892da12e7bb91bed
 
 ARG ANDROID_CMDLINE_TOOLS=15859902
 ARG ANDROID_PLATFORM=android-35
