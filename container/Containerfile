@@ -1,0 +1,56 @@
+# Reproducible build environment for AndFlmsg.
+#
+# Build:
+#   podman build -t localhost/andflmsg-build:latest -f container/Containerfile container/
+#
+# Run (see scripts/podman-build.sh for the wrapper):
+#   podman run --rm -v "$PWD:/workspace:Z" -w /workspace localhost/andflmsg-build:latest \
+#       ./gradlew :andFlmsg:assembleDebug
+
+FROM docker.io/library/eclipse-temurin:17-jdk-jammy
+
+ARG ANDROID_CMDLINE_TOOLS=15859902
+ARG ANDROID_PLATFORM=android-35
+ARG ANDROID_BUILD_TOOLS=35.0.0
+ARG ANDROID_NDK=25.2.9519653
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    ANDROID_HOME=/opt/android-sdk \
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_NDK_HOME=/opt/android-sdk/ndk/${ANDROID_NDK} \
+    GRADLE_USER_HOME=/root/.gradle
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        make \
+        unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p "${ANDROID_HOME}/cmdline-tools" \
+    && curl -fsSL \
+        "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" \
+        -o /tmp/cmdline-tools.zip \
+    && unzip -q /tmp/cmdline-tools.zip -d "${ANDROID_HOME}/cmdline-tools" \
+    && mv "${ANDROID_HOME}/cmdline-tools/cmdline-tools" \
+        "${ANDROID_HOME}/cmdline-tools/latest" \
+    && rm /tmp/cmdline-tools.zip
+
+ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
+
+RUN yes | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses >/dev/null \
+    && sdkmanager --sdk_root="${ANDROID_HOME}" --install \
+        "platform-tools" \
+        "platforms;${ANDROID_PLATFORM}" \
+        "build-tools;${ANDROID_BUILD_TOOLS}" \
+        "ndk;${ANDROID_NDK}" \
+    && rm -rf "${HOME}/.android/cache"
+
+ENV PATH="${ANDROID_NDK_HOME}:${PATH}"
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]
