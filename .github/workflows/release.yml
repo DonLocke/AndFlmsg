@@ -29,9 +29,6 @@ jobs:
       CONTAINER_ENGINE: docker
       ANDFLMSG_BUILD_IMAGE: localhost/andflmsg-build:latest
       ANDFLMSG_SKIP_IMAGE_BUILD: "1"
-      # Expose the runner temp directory inside the container. The keystore is
-      # imported there and never copied into the workspace.
-      ANDFLMSG_EXTRA_VOLUME: ${{ runner.temp }}:${{ runner.temp }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -106,6 +103,10 @@ jobs:
 
       - name: Assemble release APK
         env:
+          # runner.temp is only available in step-level contexts. Expose that
+          # directory inside the container so the keystore never touches the
+          # workspace.
+          ANDFLMSG_EXTRA_VOLUME: ${{ runner.temp }}:${{ runner.temp }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/andflmsg-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
