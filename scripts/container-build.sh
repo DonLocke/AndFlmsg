@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+#
+# Run a command inside the containerized AndFlmsg build environment.
+#
+# Works with Podman or Docker. The engine is auto-detected, or can be
+# selected with CONTAINER_ENGINE=podman|docker.
+#
+# Examples:
+#   ./scripts/container-build.sh :andFlmsg:assembleDebug
+#   ./scripts/container-build.sh bash
+#   CONTAINER_ENGINE=docker ./scripts/container-build.sh :andFlmsg:assembleDebug
+#
+# A fully qualified project task such as ":andFlmsg:assembleDebug" is passed
+# to ./gradlew automatically (the leading ":" is required, or prefix the task
+# with "gradle"). Other commands, including "bash", are run unchanged.
+
+set -euo pipefail
+
+: "${HOME:?HOME must be set}"
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+IMAGE="${ANDFLMSG_BUILD_IMAGE:-localhost/andflmsg-build:latest}"
+CONTAINERFILE="${ROOT_DIR}/container/Containerfile"
+
+if [ -n "${CONTAINER_ENGINE:-}" ]; then
+    ENGINE="${CONTAINER_ENGINE}"
+elif command -v podman >/dev/null 2>&1; then
+    ENGINE="podman"
+elif command -v docker >/dev/null 2>&1; then
+    ENGINE="docker"
+else
+    echo "error: neither podman nor docker is installed" >&2
+    exit 1
+fi
+
+if ! command -v "${ENGINE}" >/dev/null 2>&1; then
+    echo "error: ${ENGINE} is not installed" >&2
+    exit 1
+fi
+
+# Layer caching makes this cheap when nothing changed, and it guarantees the
+# image matches the Containerfile.
+"${ENGINE}" build -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
+
+mkdir -p "${HOME}/.gradle" "${HOME}/.android"
+
+# Relabel bind mounts when SELinux is enforcing. The workspace is private to
+# the container (:Z); the caches are shared with the host (:z) so they are not
+# relabelled with a new private category on every run.
+WORKSPACE_SUFFIX=""
+CACHE_SUFFIX=""
+if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" = "Enforcing" ]; then
+    WORKSPACE_SUFFIX=":Z"
+    CACHE_SUFFIX=":z"
+fi
+
+TTY_FLAGS=(-i)
+if [ -t 0 ] && [ -t 1 ]; then
+    TTY_FLAGS+=(-t)
+fi
+
+# Rootless Docker already maps container root to the invoking host user, so it
+# must not be given an explicit --user (that would map to a subuid and make the
+# bind mounts unwritable).
+is_rootless_docker() {
+    [ "$(basename "${ENGINE}")" = "docker" ] || return 1
+    local security_options
+    security_options="$("${ENGINE}" info --format '{{.SecurityOptions}}' 2>/dev/null)" || return 1
+    case "${security_options}" in
+        *rootless*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+RUN_ARGS=(
+    --rm
+    "${TTY_FLAGS[@]}"
+    -e HOME=/tmp
+    -e JAVA_TOOL_OPTIONS=-Duser.home=/tmp
+    -e ANDROID_USER_HOME=/tmp/.android
+    -e GRADLE_USER_HOME=/gradle-cache
+    -v "${ROOT_DIR}:/workspace${WORKSPACE_SUFFIX}"
+    -v "${HOME}/.gradle:/gradle-cache${CACHE_SUFFIX}"
+    # Persist the Android user home so the debug keystore stays stable across
+    # debug builds. Release signing is not configured here; see
+    # container/README.md.
+    -v "${HOME}/.android:/tmp/.android${CACHE_SUFFIX}"
+    -w /workspace
+)
+
+# Rootful Docker runs as the invoking UID/GID. Rootless Docker maps container
+# root to the invoking user, and Podman uses keep-id below, so neither needs an
+# explicit --user.
+if [ "$(basename "${ENGINE}")" = "docker" ] && ! is_rootless_docker; then
+    RUN_ARGS+=(--user "$(id -u):$(id -g)")
+fi
+
+# Rootless Podman needs keep-id so the container UID maps back to the invoking
+# user on the host.
+if [ "$(basename "${ENGINE}")" = "podman" ]; then
+    RUN_ARGS=(--userns=keep-id "${RUN_ARGS[@]}")
+fi
+
+if [ "$#" -eq 0 ]; then
+    set -- bash
+fi
+
+# Run Gradle tasks through the wrapper. Using "bash ./gradlew" keeps this
+# working even when the checked-out gradlew lacks the executable bit.
+case "$1" in
+    gradle)
+        shift
+        set -- bash ./gradlew "$@"
+        ;;
+    :*)
+        set -- bash ./gradlew "$@"
+        ;;
+    ./gradlew|gradlew)
+        shift
+        set -- bash ./gradlew "$@"
+        ;;
+esac
+
+exec "${ENGINE}" run "${RUN_ARGS[@]}" "${IMAGE}" "$@"
