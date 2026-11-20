@@ -1,11 +1,10 @@
 # Containerized build environment
 
 Build AndFlmsg without installing a JDK, Android SDK, or NDK on the host.
-The wrapper supports Podman and Docker; Podman is the tested path.
 
 ## Requirements
 
-- Podman (tested) or Docker (path implemented, not yet exercised)
+- Podman or Docker
 - Network access for the first image build
 
 ## Build and run
@@ -67,8 +66,6 @@ by you:
 - **Docker:** uses `--user "$(id -u):$(id -g)"` for a rootful daemon; for
   rootless Docker the wrapper omits it because container root already maps to
   the invoking user. This path is implemented but has not been exercised yet.
-- **SELinux:** when `getenforce` reports `Enforcing`, the workspace is mounted
-  with `:Z` and the shared caches with `:z`.
 
 The host Gradle cache and `~/.android` are mounted so dependencies and the
 debug keystore persist between runs.
