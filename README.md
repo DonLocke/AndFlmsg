@@ -10,6 +10,9 @@ It does basically most of what the fully featured version of FLMSG does.
 
 Installable apk, manuals in the Releases section.
 
+Release builds are signed in CI; see [docs/RELEASING.md](docs/RELEASING.md) for
+the tagging and Obtainium procedure.
+
 ## Crash logs
 
 Crash logs are stored locally at:

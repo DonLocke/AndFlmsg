@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CONTAINER_ENGINE: docker
+      ANDFLMSG_BUILD_IMAGE: localhost/andflmsg-build:latest
+      ANDFLMSG_SKIP_IMAGE_BUILD: "1"
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '**/*.gradle', 'gradle.properties', 'version.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Build the same image the wrapper uses, but with the GitHub Actions layer
+      # cache. The wrapper then skips its own build so CI does not pay for two
+      # full image builds.
+      - name: Build container image
+        uses: docker/build-push-action@v6
+        with:
+          context: container
+          file: container/Containerfile
+          tags: localhost/andflmsg-build:latest
+          load: true
+          cache-from: type=gha,scope=andflmsg-build
+          cache-to: type=gha,mode=max,scope=andflmsg-build
+
+      - name: Assemble debug APK
+        run: ./scripts/container-build.sh :andFlmsg:assembleDebug
+
+      - name: Lint
+        run: ./scripts/container-build.sh :andFlmsg:lintDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: andflmsg-debug
+          path: andFlmsg/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
