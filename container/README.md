@@ -1,17 +1,24 @@
 # Containerized build environment
 
-This directory contains the Podman image used to build AndFlmsg without
-installing a JDK, Android SDK, or NDK on the host.
+This directory contains the OCI container image used to build AndFlmsg without
+installing a JDK, Android SDK, or NDK on the host. It works with either Podman
+or Docker.
 
 ## Requirements
 
-- Podman
+- Podman **or** Docker
 - Network access for the first image build
 
 ## Build the image
 
+Use either engine:
+
 ```bash
 podman build -t localhost/andflmsg-build:latest -f container/Containerfile container/
+```
+
+```bash
+docker build -t localhost/andflmsg-build:latest -f container/Containerfile container/
 ```
 
 The image is based on Eclipse Temurin JDK 17 and pins:
@@ -23,29 +30,46 @@ The image is based on Eclipse Temurin JDK 17 and pins:
 
 ## Run Gradle
 
-Use the wrapper script:
+The wrapper auto-detects `podman` first, then `docker`:
 
 ```bash
-./scripts/podman-build.sh :andFlmsg:assembleDebug
-./scripts/podman-build.sh :andFlmsg:assembleRelease
+./scripts/container-build.sh :andFlmsg:assembleDebug
+./scripts/container-build.sh :andFlmsg:assembleRelease
+```
+
+Select an engine explicitly:
+
+```bash
+CONTAINER_ENGINE=podman ./scripts/container-build.sh :andFlmsg:assembleDebug
+CONTAINER_ENGINE=docker ./scripts/container-build.sh :andFlmsg:assembleDebug
 ```
 
 The repository is mounted at `/workspace`, and the host Gradle cache is
-mounted at `/root/.gradle` so dependencies are reused between runs.
+mounted into the container so dependencies are reused between runs.
 
 For an interactive shell:
 
 ```bash
-./scripts/podman-build.sh bash
+./scripts/container-build.sh bash
 ```
 
 ## Verify the toolchain
 
 ```bash
-./scripts/podman-build.sh java -version
-./scripts/podman-build.sh sdkmanager --version
-./scripts/podman-build.sh ndk-build --version
+./scripts/container-build.sh java -version
+./scripts/container-build.sh sdkmanager --version
+./scripts/container-build.sh ndk-build --version
 ```
 
-The image is built once and cached by Podman. Rebuild it with `podman build`
-after changing the versions in `Containerfile`.
+## Engine notes
+
+Both engines run the container as your UID/GID, so build outputs and the
+Gradle cache stay owned by you:
+
+- **Podman:** uses `--userns=keep-id`.
+- **Docker:** uses `--user "$(id -u):$(id -g)"`.
+- **SELinux:** the wrapper adds `:Z` to bind mounts automatically when
+  `getenforce` reports `Enforcing`.
+
+The image is built once and cached by the engine. Rebuild it after changing
+the versions in `Containerfile`.
