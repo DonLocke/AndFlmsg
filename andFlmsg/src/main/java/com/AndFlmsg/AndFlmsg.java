@@ -61,8 +61,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Looper;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.annotation.SuppressLint;
@@ -104,7 +107,6 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.text.Html;
 import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -138,6 +140,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListPopupWindow;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.PopupWindow.OnDismissListener;
@@ -189,6 +192,10 @@ public class AndFlmsg extends AppCompatActivity {
     private static final int RIGHT = 2;
     private static final int TOP = 3;
     private static final int BOTTOM = 4;
+
+    // ActionBar mode title and dropdown
+    private static TextView actionBarModeTitle = null;
+    private static ListPopupWindow actionBarModePopup = null;
 
     // Views values
     private final static int TERMVIEW = 1;
@@ -369,34 +376,45 @@ public class AndFlmsg extends AppCompatActivity {
         }
     };
 
+    // Update the ActionBar title, restoring the original colour-coded look
+    private static void setActionBarTitle(CharSequence title, int color) {
+        if (actionBarModeTitle != null) {
+            actionBarModeTitle.setText(title);
+            actionBarModeTitle.setTextColor(color);
+            return;
+        }
+        //Fallback if the custom ActionBar view could not be installed
+        try {
+            AppCompatActivity activity = (AppCompatActivity) myContext;
+            if (activity.getSupportActionBar() != null) {
+                SpannableString coloredTitle = new SpannableString(title);
+                coloredTitle.setSpan(new ForegroundColorSpan(color), 0, coloredTitle.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                activity.getSupportActionBar().setTitle(coloredTitle);
+            }
+        } catch (Throwable ignored) {
+            //Keep the existing Samsung/Wiko appcompat workaround silent
+        }
+    }
+
     // Create runnable for changing the main window's title
     public static final Runnable updatetitle = new Runnable() {
         public void run() {
-            int mIndex = Modem.getModeIndexFullList(Processor.RxModem);
             //SAMSUNG & WIKO appcompat BUG Workaround
             try {
-                //Only if buttons shown in the action bar ((AppCompatActivity) myContext).supportInvalidateOptionsMenu();
+                int mIndex = Modem.getModeIndexFullList(Processor.RxModem);
+                String modeStr = Modem.modemCapListString[mIndex];
                 if (ProcessorON) {
                     if (Processor.TXActive) {
-                        //		    myWindow.setTitleColor(Color.YELLOW);
-                        ((AppCompatActivity) myContext).getSupportActionBar().setTitle((Html.fromHtml("<font color=\"#FFFF00\">"
-                                //Remove app name to make space for more information
-                                // + "AndFlmsg- " + Modem.modemCapListString[mIndex] + " - " + Processor.Status + AndFlmsg.txMessageCount
-                                + Modem.modemCapListString[mIndex] + " - " + Processor.Status + AndFlmsg.txMessageCount
-                                + AndFlmsg.txProgressCount
-                                + "</font>")));
+                        setActionBarTitle(modeStr + " - " + Processor.Status + AndFlmsg.txMessageCount
+                                + AndFlmsg.txProgressCount, Color.YELLOW);
                     } else {
-                        //		    myWindow.setTitleColor(Color.CYAN);
-                        ((AppCompatActivity) myContext).getSupportActionBar().setTitle((Html.fromHtml("<font color=\"#33D6FF\">" +
-                                //Remove app name to make space for more information
-                                //"AndFlmsg-" + Modem.modemCapListString[mIndex] + " - " + Processor.Status + "</font>")));
-                                Modem.modemCapListString[mIndex] + " - " + Processor.Status + "</font>")));
+                        setActionBarTitle(modeStr + " - " + Processor.Status,
+                                Color.rgb(0x33, 0xD6, 0xFF));
                         txProgressCount = ""; //Reset percent complete of file TX
                     }
                 } else {
-                    ((AppCompatActivity) myContext).getSupportActionBar().setTitle((Html.fromHtml("<font color=\"#FFFFFF\">" +
-                            //+ "AndFlmsg - Modem OFF" + "</font>")));
-                            "Modem OFF" + "</font>")));
+                    setActionBarTitle("Modem OFF", Color.WHITE);
                 }
             } catch (Throwable x) {
                 loggingclass.writelog("\nDebug Information: Samsung/Wiko appcompat compatibility issue workaround activated!", null, true);
@@ -1244,10 +1262,90 @@ public class AndFlmsg extends AppCompatActivity {
         Modem.updateModemCapabilityList();
 
         //If we do not have a last mode, this is the first time in the app (use NBEMS safest default: MT63-2000-Long)
-        if (Processor.RxModem == -1) Processor.RxModem = Modem.getMode("MT63_2000_LG");
+        if (Processor.RxModem == -1) {
+            Processor.TxModem = Processor.RxModem = Modem.getMode("MT63_2000_LG");
+        }
 
         // We start with the Terminal screen
         displayTerminal(NORMAL);
+
+        //Install the clickable mode title in the ActionBar once the content view exists
+        setupActionBarModeTitle();
+    }
+
+    //Install a clickable mode title in the ActionBar title area
+    private void setupActionBarModeTitle() {
+        if (getSupportActionBar() == null) return;
+
+        View titleView = getLayoutInflater().inflate(R.layout.actionbar_mode_title, null);
+        actionBarModeTitle = (TextView) titleView.findViewById(R.id.mode_title);
+
+        actionBarModePopup = new ListPopupWindow(this);
+        actionBarModePopup.setAnchorView(actionBarModeTitle);
+        actionBarModePopup.setModal(true);
+        actionBarModePopup.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        actionBarModePopup.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (actionBarModePopup != null) actionBarModePopup.dismiss();
+                changeModeFromActionBar(position);
+            }
+        });
+
+        actionBarModeTitle.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showActionBarModePopup();
+            }
+        });
+
+        getSupportActionBar().setDisplayShowCustomEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setCustomView(titleView,
+                new androidx.appcompat.app.ActionBar.LayoutParams(
+                        androidx.appcompat.app.ActionBar.LayoutParams.MATCH_PARENT,
+                        androidx.appcompat.app.ActionBar.LayoutParams.WRAP_CONTENT));
+
+        //Show the current status immediately rather than waiting for the first update
+        AndFlmsg.mHandler.post(AndFlmsg.updatetitle);
+    }
+
+    //Show the available modes as a dropdown anchored to the ActionBar title
+    private void showActionBarModePopup() {
+        if (actionBarModePopup == null || actionBarModeTitle == null) return;
+
+        ArrayList<String> modeNames = new ArrayList<String>();
+        for (int i = 0; i < Modem.customNumModes; i++) {
+            modeNames.add(Modem.customModeListString[i]);
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, modeNames);
+        actionBarModePopup.setAdapter(adapter);
+        actionBarModePopup.setSelection(Modem.getModeIndex(Processor.RxModem));
+        actionBarModePopup.show();
+    }
+
+    //Apply a mode selected from the ActionBar dropdown
+    private void changeModeFromActionBar(int position) {
+        if (position < 0 || position >= Modem.customNumModes) return;
+
+        int newMode = Modem.customModeListInt[position];
+        if (newMode == Processor.RxModem) return;
+
+        try {
+            if (!Processor.ReceivingForm && ProcessorON
+                    && !Processor.TXActive && Modem.modemState == Modem.RXMODEMRUNNING) {
+                Processor.TxModem = Processor.RxModem = newMode;
+                Modem.changemode(newMode); // to make the changes effective
+                saveLastModeUsed(newMode);
+                AndFlmsg.mHandler.post(AndFlmsg.updatetitle);
+            } else {
+                middleToastText(getString(R.string.txt_CannotChangeModeNow));
+            }
+        } catch (Exception ex) {
+            loggingclass.writelog("Mode change error: " + ex.getMessage(), null, true);
+        }
     }
 
     /**
