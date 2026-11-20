@@ -2,6 +2,9 @@
 .gradle
 /.android
 /local.properties
+keystore.properties
+*.jks
+*.keystore
 /.idea/workspace.xml
 /.idea/libraries
 .idea

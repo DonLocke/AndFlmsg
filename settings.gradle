@@ -1,4 +1,3 @@
 rootProject.name = 'AndFlmsg'
 
-include ':aFileDialogoriginal'
 include ':andFlmsg'

@@ -53,7 +53,6 @@ The wrapper auto-detects `podman` first, then `docker`:
 
 ```bash
 ./scripts/container-build.sh :andFlmsg:assembleDebug
-./scripts/container-build.sh :andFlmsg:assembleRelease
 ```
 
 Arguments that start with `:` are passed to `./gradlew` automatically. You can
@@ -62,6 +61,13 @@ also invoke it explicitly:
 ```bash
 ./scripts/container-build.sh ./gradlew :andFlmsg:assembleDebug
 ```
+
+## Local vs release builds
+
+Use `assembleDebug` locally. The local `assembleRelease` target currently uses
+the debug signing config and is only for build testing; do not distribute it.
+Publishable release APKs will be built in GitHub Actions with a dedicated
+release keystore.
 
 Select an engine explicitly:
 
