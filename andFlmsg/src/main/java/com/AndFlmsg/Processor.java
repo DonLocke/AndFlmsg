@@ -22,6 +22,8 @@ import java.io.*;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
@@ -143,12 +145,19 @@ public class Processor extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        //Enter the foreground before opening the microphone. Android 14+ checks
+        //the foreground service type when the app accesses while-in-use
+        //permissions such as RECORD_AUDIO.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(1, AndFlmsg.myNotification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                            | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        } else {
+            startForeground(1, AndFlmsg.myNotification);
+        }
+
         // Start the RxThread
         Modem.startmodem();
-
-        //Make sure Android keeps this running even if resources are limited
-        //Display the notification in the system bar at the top at the same time
-        startForeground(1, AndFlmsg.myNotification);
 
         // Do not let the system auto-restart this service after a crash: it
         // depends on the Activity-scoped AndFlmsg.myContext and cannot run

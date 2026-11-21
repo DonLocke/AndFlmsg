@@ -53,6 +53,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 //import android.support.v4.app.ActivityCompat;
 //import android.support.v4.app.NotificationCompat;
 //import androidx.core.content.
@@ -292,6 +295,8 @@ public class AndFlmsg extends AppCompatActivity {
     //private NotificationManager myNotificationManager;
     public static Notification myNotification = null;
 
+    private static final String MODEM_NOTIFICATION_CHANNEL_ID = "modem";
+
     // Array adapter for the messages' list
     public static ArrayAdapter<String> msgArrayAdapter;
 
@@ -326,7 +331,7 @@ public class AndFlmsg extends AppCompatActivity {
     public static final int STREAM_BLUETOOTH_SCO = 6;
 
     //Bluetooth file transfers
-    public static BroadcastReceiver mReceiver = null;
+    private BroadcastReceiver mReceiver = null;
 
     // To monitor the incoming calls and disconnect Bluetooth so that we don't
     // send the phone call audio to the radio
@@ -857,6 +862,7 @@ public class AndFlmsg extends AppCompatActivity {
     public static boolean broadcastStickyPermit = false;
     public static boolean readPhoneStatePermit = false;
     private final int REQUEST_PERMISSIONS = 15556;
+    private final int REQUEST_NOTIFICATIONS = 15557;
     public final String[] permissionList = {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.BLUETOOTH,
@@ -910,9 +916,44 @@ public class AndFlmsg extends AppCompatActivity {
     }
 
 
+    //AppCompat insets the ActionBar but leaves the content edge-to-edge on
+    //Android 15, so inset the content root for system bars and the keyboard.
+    private void applyContentWindowInsets() {
+        View content = findViewById(android.R.id.content);
+        if (content == null) {
+            return;
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(content, (view, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout());
+            Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+            view.setPadding(bars.left, bars.top, bars.right,
+                    Math.max(bars.bottom, ime.bottom));
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(content);
+    }
+
+
+    //Notification permission is not a hard requirement for the app to run, so
+    //it is requested separately and a denial does not close the app.
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(myContext,
+                        Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(myInstance,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    REQUEST_NOTIFICATIONS);
+        }
+    }
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATIONS) {
+            return;
+        }
         int granted = PackageManager.PERMISSION_GRANTED;
         for (int i = 0; i < grantResults.length; i++) {
             if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -1174,7 +1215,10 @@ public class AndFlmsg extends AppCompatActivity {
         filter.addAction(ACTION_USB_PERMISSION);
         filter.addAction(INTENT_ACTION_GRANT_USB);
         //Not called filter.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        this.registerReceiver(mReceiver, filter);
+        //Android 14+ requires an explicit exported/not-exported flag. These are
+        //app-targeted or system broadcasts, so they do not need to be exported.
+        ContextCompat.registerReceiver(this, mReceiver, filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
 
         // Register for phone state monitoring
         tmgr = (TelephonyManager) myContext.getSystemService(Context.TELEPHONY_SERVICE);
@@ -1272,6 +1316,10 @@ public class AndFlmsg extends AppCompatActivity {
 
         //Install the clickable mode title in the ActionBar once the content view exists
         setupActionBarModeTitle();
+        applyContentWindowInsets();
+
+        //Notifications are optional; request them without blocking app startup.
+        requestNotificationPermissionIfNeeded();
     }
 
     //Install a clickable mode title in the ActionBar title area
@@ -1415,23 +1463,20 @@ public class AndFlmsg extends AppCompatActivity {
             }
         } else { // start if not ON yet AND we haven't paused the modem manually
             if (!ProcessorON && !modemPaused) {
-                String NOTIFICATION_CHANNEL_ID = "com.AndFlmsg";
                 String channelName = "Background Modem";
-                NotificationChannel chan = null;
-                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
-                NotificationCompat.Builder mBuilder;
-                String chanId = "";
                 //New code for support of Android version 8+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+                    NotificationChannel chan = new NotificationChannel(
+                            MODEM_NOTIFICATION_CHANNEL_ID, channelName,
+                            NotificationManager.IMPORTANCE_LOW);
                     chan.setLightColor(Color.BLUE);
                     chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
                     NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                     assert manager != null;
                     manager.createNotificationChannel(chan);
-                    chanId = chan.getId();
                 }
-                mBuilder = new NotificationCompat.Builder(this, chanId)
+                NotificationCompat.Builder mBuilder =
+                        new NotificationCompat.Builder(this, MODEM_NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(R.drawable.notificationicon)
                         .setContentTitle(getString(R.string.txt_ModemON))
                         .setContentText(getString(R.string.txt_FldigiModemOn))
@@ -1500,6 +1545,14 @@ public class AndFlmsg extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
+        if (mReceiver != null) {
+            try {
+                unregisterReceiver(mReceiver);
+            } catch (IllegalArgumentException ignored) {
+                //Already unregistered.
+            }
+            mReceiver = null;
+        }
         super.onDestroy();
     }
 

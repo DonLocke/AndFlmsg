@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.INTERNET"></uses-permission>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"></uses-permission>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"></uses-permission>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"></uses-permission>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"></uses-permission>
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -25,7 +28,7 @@
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
             android:label="@string/txt_app_name"
             android:theme="@style/Theme.AppCompat"
-            android:windowSoftInputMode="stateHidden"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="true"
             android:launchMode="singleTop" >
             <!--  android:launchMode="singleInstance" -->
@@ -46,7 +49,12 @@
         </activity>
 
         <service
-            android:name=".Processor" >
+            android:name=".Processor"
+            android:exported="false"
+            android:foregroundServiceType="specialUse|microphone" >
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="amateur radio modem audio processing" />
         </service>
 
         <activity

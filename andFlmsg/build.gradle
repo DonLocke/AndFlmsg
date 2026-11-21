@@ -57,14 +57,15 @@ android {
     compileSdk = 36
     // NDK upgrades are deferred until the native sources are migrated. Pin the
     // version explicitly so AGP does not fall back to its newer default NDK.
-    // NDK 21 does not produce 16 KB-aligned libraries; revisit that separately.
+    // NDK 21 does not produce 16 KB-aligned libraries; the NDK update is tracked
+    // separately from the targetSdk bump.
     ndkVersion = "21.4.7075529"
 
 
     defaultConfig {
         applicationId = appId
         minSdk = 23
-        targetSdk = 33
+        targetSdk = 35
         versionCode = appVersionCode
         versionName = versionNameText
         buildConfigField "String", "VERSION_DATE", "\"${versionDateText}\""

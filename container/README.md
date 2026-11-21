@@ -39,7 +39,7 @@ For an interactive shell:
 
 - Eclipse Temurin JDK 21 (base image pinned by digest)
 - Android command-line tools `16111833` (SHA-256 verified)
-- Platform `android-36` (compileSdk 36, targetSdk 33)
+- Platform `android-36` (compileSdk 36, targetSdk 35)
 - Build tools `36.0.0`
 - Platform tools `37.0.3` (SHA-256 verified)
 - NDK `21.4.7075529` (r21e)
@@ -55,9 +55,9 @@ and rebuild the image.
 Building without the container requires JDK 21. AGP 9.5 requires JDK 17 or
 newer; the container and CI use JDK 21.
 
-The NDK is intentionally pinned to r21e and `targetSdk` remains 33 while the
-native sources and the Kotlin UI rewrite are pending. Do not bump either as
-part of a routine toolchain update.
+The NDK is intentionally pinned to r21e while the native source migration is
+pending. `targetSdk` is 35; the NDK update needed for 16 KB page-size support is
+tracked separately. Do not bump the NDK as part of a routine toolchain update.
 
 ## Local vs release builds
 
