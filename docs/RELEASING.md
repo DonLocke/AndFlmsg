@@ -107,7 +107,7 @@ picks it up without requiring prerelease support to be enabled. Bump
 The tag push starts `.github/workflows/release.yml`. The workflow:
 
 - asserts that `v<versionName>` equals the pushed tag;
-- installs JDK 17 and the pinned Android SDK/NDK on the GitHub-hosted runner;
+- installs JDK 21 and the pinned Android SDK/NDK on the GitHub-hosted runner;
 - builds `:andFlmsg:assembleRelease`;
 - verifies the APK with `apksigner verify` and checks the version code/name;
 - writes a SHA-256 checksum;
