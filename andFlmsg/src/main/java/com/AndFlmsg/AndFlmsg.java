@@ -703,6 +703,7 @@ public class AndFlmsg extends AppCompatActivity {
     }
 
 
+    @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
         if (AndFlmsg.inFormDisplay) { //In "popup" screen displaying individual messages

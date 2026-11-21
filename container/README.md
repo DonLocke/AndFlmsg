@@ -37,21 +37,27 @@ For an interactive shell:
 
 ## Toolchain
 
-- Eclipse Temurin JDK 17 (base image pinned by digest)
-- Android command-line tools `15859902` (SHA-256 verified)
-- Platform `android-35` (compileSdk 35, targetSdk 33)
-- Build tools `35.0.0`
+- Eclipse Temurin JDK 21 (base image pinned by digest)
+- Android command-line tools `16111833` (SHA-256 verified)
+- Platform `android-36` (compileSdk 36, targetSdk 33)
+- Build tools `36.0.0`
 - Platform tools `37.0.3` (SHA-256 verified)
 - NDK `21.4.7075529` (r21e)
 
-The Gradle wrapper pins Gradle `8.9` and Android Gradle Plugin `8.7.3`.
-The SDK and NDK versions are also set in `andFlmsg/build.gradle` (or the
-Containerfile for platform tools), and they are preinstalled in the image.
-Platform tools is installed by the Containerfile rather than `sdkmanager`, so
-the pinned version cannot be silently replaced. Bump the versions in both
-places and rebuild the image.
+The Gradle wrapper pins Gradle `9.9.2` and Android Gradle Plugin `9.5.2`.
+`compileSdk` and `ndkVersion` are set in `andFlmsg/build.gradle`; the platform,
+build-tools and platform-tools versions are pinned in the Containerfile. AGP
+9.5 uses build-tools `36.0.0` by default, which matches the image. Platform
+tools is installed by the Containerfile rather than `sdkmanager`, so the pinned
+version cannot be silently replaced. Bump the versions in the appropriate place
+and rebuild the image.
 
-Building without the container requires JDK 17; AGP 8.7 does not run on JDK 11.
+Building without the container requires JDK 21. AGP 9.5 requires JDK 17 or
+newer; the container and CI use JDK 21.
+
+The NDK is intentionally pinned to r21e and `targetSdk` remains 33 while the
+native sources and the Kotlin UI rewrite are pending. Do not bump either as
+part of a routine toolchain update.
 
 ## Local vs release builds
 

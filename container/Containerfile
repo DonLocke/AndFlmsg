@@ -3,12 +3,12 @@
 # The wrapper builds this image automatically (Podman or Docker):
 #   ./scripts/container-build.sh :andFlmsg:assembleDebug
 
-FROM docker.io/library/eclipse-temurin:17-jdk-jammy@sha256:96ac8197b2cbc2bb0f9fbcbf91dbb0015f43b3c76a1cb351892da12e7bb91bed
+FROM docker.io/library/eclipse-temurin:21-jdk-jammy@sha256:b2711c65970c1227197c29c46e669bfdbb137524e9da0e664703a140ec25a040
 
-ARG ANDROID_CMDLINE_TOOLS=15859902
-ARG ANDROID_CMDLINE_TOOLS_SHA256=4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583
-ARG ANDROID_PLATFORM=android-35
-ARG ANDROID_BUILD_TOOLS=35.0.0
+ARG ANDROID_CMDLINE_TOOLS=16111833
+ARG ANDROID_CMDLINE_TOOLS_SHA256=0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8
+ARG ANDROID_PLATFORM=android-36
+ARG ANDROID_BUILD_TOOLS=36.0.0
 ARG ANDROID_PLATFORM_TOOLS=37.0.3
 ARG ANDROID_PLATFORM_TOOLS_SHA256=214548146cadb2ca3508143d8a1d4be4c59de5bb837253e3ede89ed74cf450d1
 ARG ANDROID_NDK=21.4.7075529
@@ -58,6 +58,7 @@ RUN yes | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses >/dev/null \
         "platforms;${ANDROID_PLATFORM}" \
         "build-tools;${ANDROID_BUILD_TOOLS}" \
         "ndk;${ANDROID_NDK}" \
+    && chmod -R a+rX "${ANDROID_HOME}" \
     && rm -rf "${HOME}/.android/cache"
 
 ENV PATH="${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:${ANDROID_NDK_HOME}:${PATH}"
