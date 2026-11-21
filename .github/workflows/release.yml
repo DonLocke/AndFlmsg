@@ -154,6 +154,7 @@ jobs:
             gh release create "$tag" "${files[@]}" \
               --title "AndFlmsg ${{ steps.version.outputs.version_name }}" \
               --generate-notes \
+              --latest \
               --verify-tag
           fi
 
