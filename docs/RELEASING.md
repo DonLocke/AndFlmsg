@@ -8,14 +8,14 @@ key, keystore password, or release APK needs to exist on a workstation.
 `version.properties` in the repository root is the single source of truth:
 
 ```properties
-versionCode=4
-versionName=1.8.0.0-rc.1
+versionCode=5
+versionName=1.8.0.0-rc.2
 versionDate=20261121
 ```
 
 Both Gradle and the release workflow read it. The Android manifest intentionally
 does not contain `android:versionCode` or `android:versionName`. A release tag
-must be exactly `v<versionName>` (for example `v1.8.0.0-rc.1`), and the workflow
+must be exactly `v<versionName>` (for example `v1.8.0.0-rc.2`), and the workflow
 fails if the tag and file disagree. Increment `versionCode` for every published
 build, including release candidates.
 
@@ -95,11 +95,11 @@ so an unsigned or debug-signed APK cannot be published by mistake.
    ```bash
    git checkout master
    git pull --ff-only
-   git tag -a v1.8.0.0-rc.1 -m "AndFlmsg 1.8.0.0-rc.1"
-   git push origin v1.8.0.0-rc.1
+   git tag -a v1.8.0.0-rc.2 -m "AndFlmsg 1.8.0.0-rc.2"
+   git push origin v1.8.0.0-rc.2
    ```
 
-Release-candidate tags such as `v1.8.0.0-rc.1` use the same workflow. The
+Release-candidate tags such as `v1.8.0.0-rc.2` use the same workflow. The
 workflow creates a normal GitHub Release (not a GitHub prerelease) so Obtainium
 picks it up without requiring prerelease support to be enabled. Bump
 `versionCode` again before the final `1.8.0.0` release.
@@ -123,7 +123,7 @@ needs the four signing secrets, and the result is uploaded as a workflow
 artifact:
 
 ```bash
-gh workflow run release.yml --ref <branch> -f tag=v1.8.0.0-rc.1
+gh workflow run release.yml --ref <branch> -f tag=v1.8.0.0-rc.2
 gh run watch
 ```
 
@@ -152,6 +152,12 @@ the first release from this repository, **uninstall the upstream build once**.
 Uninstalling removes app data, so export anything you need first. After that,
 updates from this repository install normally because every release uses the
 same release key.
+
+Builds from this repository before `1.8.0.0-rc.2` used the `com.AndFlmsg`
+package. From `1.8.0.0-rc.2` onward the package is `com.donlocke.andflmsg`, so
+Android treats the two as separate apps: an existing `com.AndFlmsg` install
+will not update in place and both will appear in the launcher. Export any data
+from the old install before uninstalling it.
 
 Do not publish a release signed with a debug key or a different keystore: users
 would have to uninstall again. Keep the offline keystore backup safe for the
