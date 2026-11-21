@@ -39,8 +39,8 @@ if ! command -v "${ENGINE}" >/dev/null 2>&1; then
 fi
 
 # Layer caching makes this cheap when nothing changed, and it guarantees the
-# image matches the Containerfile. CI prebuilds the image with a remote layer
-# cache and sets ANDFLMSG_SKIP_IMAGE_BUILD=1 so this step is skipped there.
+# image matches the Containerfile. Callers that have already built or pulled the
+# image can set ANDFLMSG_SKIP_IMAGE_BUILD=1.
 if [ "${ANDFLMSG_SKIP_IMAGE_BUILD:-0}" != "1" ]; then
     "${ENGINE}" build -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
 fi
@@ -91,8 +91,8 @@ RUN_ARGS=(
     -w /workspace
 )
 
-# Optional extra bind mount in HOST:CONTAINER form. CI uses this to expose
-# $RUNNER_TEMP so the release keystore never touches the workspace.
+# Optional extra bind mount in HOST:CONTAINER form, useful when a signing key
+# or other input lives outside the workspace.
 if [ -n "${ANDFLMSG_EXTRA_VOLUME:-}" ]; then
     RUN_ARGS+=(-v "${ANDFLMSG_EXTRA_VOLUME}${CACHE_SUFFIX}")
 fi

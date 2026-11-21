@@ -63,12 +63,12 @@ they are never debug-signed.
 See [docs/RELEASING.md](../docs/RELEASING.md) for the key, secret, and tagging
 procedure.
 
-## CI image cache
+## CI and release builds
 
-CI builds the image with a GitHub Actions layer cache, then sets
-`ANDFLMSG_SKIP_IMAGE_BUILD=1` so the wrapper reuses that image instead of
-rebuilding it. `ANDFLMSG_EXTRA_VOLUME=HOST:CONTAINER` adds an optional bind mount;
-the release workflow uses it to expose `$RUNNER_TEMP` for the keystore.
+CI and release builds run directly on GitHub-hosted runners with
+`actions/setup-java`, `android-actions/setup-android`, and
+`gradle/actions/setup-gradle`. The container image is kept for local development
+so you can build with the same pinned toolchain without installing the SDK.
 
 ## Engine notes
 
@@ -80,7 +80,8 @@ by you:
   root) is not supported.
 - **Docker:** uses `--user "$(id -u):$(id -g)"` for a rootful daemon; for
   rootless Docker the wrapper omits it because container root already maps to
-  the invoking user. CI exercises this path on every pull request.
+  the invoking user. This path can be exercised locally with
+  `CONTAINER_ENGINE=docker`.
 
 The host Gradle cache and `~/.android` are mounted so dependencies and the
 debug keystore persist between runs.
