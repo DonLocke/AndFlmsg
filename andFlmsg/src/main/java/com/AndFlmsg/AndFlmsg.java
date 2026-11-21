@@ -356,7 +356,7 @@ public class AndFlmsg extends AppCompatActivity {
     public static OnSharedPreferenceChangeListener splistener;
 
     //USB serial interface
-    private static final String ACTION_USB_PERMISSION = "com.AndFlmsg.USB_PERMISSION";
+    private static final String ACTION_USB_PERMISSION = BuildConfig.APPLICATION_ID + ".USB_PERMISSION";
     public static UsbSerialPort usbSerialPort = null;
     public enum UsbPermission { Unknown, Requested, Granted, Denied };
     public static UsbPermission usbPermission = UsbPermission.Unknown;

@@ -42,7 +42,7 @@
         </activity>
 
         <activity
-            android:name="myPreferences"  >
+            android:name=".myPreferences"  >
         </activity>
 
         <service
