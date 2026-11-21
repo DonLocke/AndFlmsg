@@ -31,7 +31,7 @@ def hasReleaseSigning = [releaseKeystorePath, releaseKeystorePassword,
                          releaseKeyAlias, releaseKeyPassword].every {
     it != null && !it.trim().isEmpty()
 }
-if (hasReleaseSigning && !new File(releaseKeystorePath).isFile()) {
+if (hasReleaseSigning && !file(releaseKeystorePath).isFile()) {
     throw new GradleException(
         "ANDROID_KEYSTORE_PATH does not point to a file: ${releaseKeystorePath}")
 }
