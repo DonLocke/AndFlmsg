@@ -50,8 +50,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     // Keep compileSdk and ndkVersion in sync with container/Containerfile.
-    // buildToolsVersion is left at the AGP default (36.0.0), which matches the
-    // build-tools version installed by the image and CI.
     compileSdk = 36
     // NDK upgrades are deferred until the native sources are migrated. Pin the
     // version explicitly so AGP does not fall back to its newer default NDK.
@@ -62,14 +60,9 @@ android {
     defaultConfig {
         applicationId = appId
         minSdk = 23
-        // targetSdk changes are deferred to the Kotlin UI rewrite, which will
-        // handle the Android 14/15/16 behavior changes (foreground service
-        // types, receiver flags, permissions, edge-to-edge and predictive back).
         targetSdk = 33
         versionCode = appVersionCode
         versionName = versionNameText
-        // Release date for versionName, displayed by Processor.version.
-        // Both values come from version.properties.
         buildConfigField "String", "VERSION_DATE", "\"${versionDateText}\""
         externalNativeBuild {
             ndkBuild {
