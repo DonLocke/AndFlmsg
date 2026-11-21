@@ -115,7 +115,8 @@ gradle.taskGraph.whenReady { graph ->
     }
     def releaseTask = graph.allTasks.find { task ->
         task.project.path == appProjectPath &&
-            task.name ==~ /(?i)(assemble|bundle|package|install|sign).*release.*/
+            (task.name ==~ /(?i)^(assemble|bundle|package|install).*release$/ ||
+             task.name ==~ /(?i)^sign.*release.*$/)
     }
     if (releaseTask != null) {
         throw new GradleException(

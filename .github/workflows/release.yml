@@ -26,12 +26,10 @@ jobs:
     permissions:
       contents: write
     env:
-      CONTAINER_ENGINE: docker
-      ANDFLMSG_BUILD_IMAGE: localhost/andflmsg-build:latest
-      ANDFLMSG_SKIP_IMAGE_BUILD: "1"
+      ANDROID_BUILD_TOOLS_VERSION: "35.0.0"
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Resolve and validate version
         id: version
@@ -65,28 +63,23 @@ jobs:
           echo "Actual tag: ${actual_tag:-<none: workflow_dispatch dry run>}"
           echo "Expected tag: $expected_tag"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '**/*.gradle', 'gradle.properties', 'version.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+          distribution: temurin
+          java-version: "17"
 
-      - name: Build container image
-        uses: docker/build-push-action@v6
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
         with:
-          context: container
-          file: container/Containerfile
-          tags: localhost/andflmsg-build:latest
-          load: true
-          cache-from: type=gha,scope=andflmsg-build
-          cache-to: type=gha,mode=max,scope=andflmsg-build
+          packages: >-
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+            ndk;21.4.7075529
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Import release keystore
         env:
@@ -103,23 +96,20 @@ jobs:
 
       - name: Assemble release APK
         env:
-          # runner.temp is only available in step-level contexts. Expose that
-          # directory inside the container so the keystore never touches the
-          # workspace.
-          ANDFLMSG_EXTRA_VOLUME: ${{ runner.temp }}:${{ runner.temp }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/andflmsg-release.p12
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./scripts/container-build.sh :andFlmsg:assembleRelease
+        run: ./gradlew :andFlmsg:assembleRelease
 
       - name: Verify APK signature and version
         run: |
           set -euo pipefail
           apk="andFlmsg/build/outputs/apk/release/andFlmsg-release.apk"
+          build_tools="${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}"
           test -f "$apk"
-          ./scripts/container-build.sh apksigner verify --verbose --print-certs "$apk"
-          badging="$(./scripts/container-build.sh aapt dump badging "$apk")"
+          "${build_tools}/apksigner" verify --verbose --print-certs "$apk"
+          badging="$("${build_tools}/aapt" dump badging "$apk")"
           printf '%s\n' "$badging"
           printf '%s\n' "$badging" | grep -q "versionCode='${{ steps.version.outputs.version_code }}'"
           printf '%s\n' "$badging" | grep -q "versionName='${{ steps.version.outputs.version_name }}'"
@@ -133,7 +123,7 @@ jobs:
           (cd release && sha256sum "$apk_name" > "$apk_name.sha256" && sha256sum -c "$apk_name.sha256")
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: andflmsg-release-${{ steps.version.outputs.version_name }}
           path: release/*
@@ -154,6 +144,7 @@ jobs:
             gh release create "$tag" "${files[@]}" \
               --title "AndFlmsg ${{ steps.version.outputs.version_name }}" \
               --generate-notes \
+              --latest \
               --verify-tag
           fi
 

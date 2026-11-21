@@ -8,15 +8,16 @@ key, keystore password, or release APK needs to exist on a workstation.
 `version.properties` in the repository root is the single source of truth:
 
 ```properties
-versionCode=3
-versionName=1.7.1.0
-versionDate=20261120
+versionCode=4
+versionName=1.8.0.0-rc.1
+versionDate=20261121
 ```
 
 Both Gradle and the release workflow read it. The Android manifest intentionally
 does not contain `android:versionCode` or `android:versionName`. A release tag
-must be exactly `v<versionName>` (for example `v1.7.1.0`), and the workflow fails
-if the tag and file disagree.
+must be exactly `v<versionName>` (for example `v1.8.0.0-rc.1`), and the workflow
+fails if the tag and file disagree. Increment `versionCode` for every published
+build, including release candidates.
 
 ## Release keystore
 
@@ -94,17 +95,26 @@ so an unsigned or debug-signed APK cannot be published by mistake.
    ```bash
    git checkout master
    git pull --ff-only
-   git tag -a v1.7.1.0 -m "AndFlmsg 1.7.1.0"
-   git push origin v1.7.1.0
+   git tag -a v1.8.0.0-rc.1 -m "AndFlmsg 1.8.0.0-rc.1"
+   git push origin v1.8.0.0-rc.1
    ```
+
+Release-candidate tags such as `v1.8.0.0-rc.1` use the same workflow. The
+workflow creates a normal GitHub Release (not a GitHub prerelease) so Obtainium
+picks it up without requiring prerelease support to be enabled. Bump
+`versionCode` again before the final `1.8.0.0` release.
 
 The tag push starts `.github/workflows/release.yml`. The workflow:
 
 - asserts that `v<versionName>` equals the pushed tag;
-- builds `:andFlmsg:assembleRelease` inside the container image;
+- installs JDK 17 and the pinned Android SDK/NDK on the GitHub-hosted runner;
+- builds `:andFlmsg:assembleRelease`;
 - verifies the APK with `apksigner verify` and checks the version code/name;
 - writes a SHA-256 checksum;
 - creates the GitHub Release with the APK and `.sha256` file.
+
+The container image is still available for local builds but is no longer used by
+CI or the release workflow.
 
 ## Dry run
 
@@ -113,7 +123,7 @@ needs the four signing secrets, and the result is uploaded as a workflow
 artifact:
 
 ```bash
-gh workflow run release.yml --ref <branch> -f tag=v1.7.1.0
+gh workflow run release.yml --ref <branch> -f tag=v1.8.0.0-rc.1
 gh run watch
 ```
 
@@ -129,6 +139,10 @@ Obtainium can track this repository directly:
   `andFlmsg-.*\.apk`.
 - Obtainium can use the release tag or the APK version name for the displayed
   version. The APK's `versionCode` is authoritative for update ordering.
+- Release candidates are published as normal releases by this workflow, so
+  Obtainium sees them without changing its prerelease settings. The tag still
+  sorts below the eventual final `v1.8.0.0`; users on an RC can update to the
+  final build because its `versionCode` is higher.
 
 ### Uninstall the upstream build once
 
