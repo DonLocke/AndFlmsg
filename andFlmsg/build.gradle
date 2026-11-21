@@ -19,7 +19,11 @@ if (!(versionCodeText ==~ /\d+/) || versionNameText.isEmpty() || versionDateText
         'version.properties must define an integer versionCode plus versionName and versionDate')
 }
 def appVersionCode = versionCodeText.toInteger()
-def appId = 'com.AndFlmsg'
+// Keep the namespace as com.AndFlmsg so the existing Java packages and
+// R/BuildConfig references resolve unchanged. The applicationId is the
+// installed identity and must differ from upstream so both can coexist.
+def appNamespace = 'com.AndFlmsg'
+def appId = 'com.donlocke.andflmsg'
 
 // Release signing comes from CI environment variables only. Local debug builds
 // do not need it, and release tasks fail closed when it is absent.
@@ -37,7 +41,7 @@ if (hasReleaseSigning && !file(releaseKeystorePath).isFile()) {
 }
 
 android {
-    namespace = appId
+    namespace = appNamespace
 
     // AGP disables BuildConfig by default; AndFlmsg.java uses
     // BuildConfig.APPLICATION_ID, so it must stay enabled.

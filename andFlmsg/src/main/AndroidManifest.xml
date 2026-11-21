@@ -17,7 +17,8 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:name=".AndFlmsgApplication"
-        android:icon="@drawable/icon"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/txt_app_name">
         <activity
             android:name=".AndFlmsg"
@@ -41,7 +42,7 @@
         </activity>
 
         <activity
-            android:name="myPreferences"  >
+            android:name=".myPreferences"  >
         </activity>
 
         <service

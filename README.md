@@ -17,18 +17,18 @@ the tagging and Obtainium procedure.
 
 Crash logs are stored locally at:
 
-- **Android 10 and lower:** `<storage>/Android/data/com.AndFlmsg/files/Documents/crash-logs/`
+- **Android 10 and lower:** `<storage>/Android/data/com.donlocke.andflmsg/files/Documents/crash-logs/`
 - **Android 11 and higher:** the same app-specific location, but system file
   managers and MTP may not expose `Android/data`. Enable Developer options →
   USB debugging and try:
 
   ```bash
-  adb pull /sdcard/Android/data/com.AndFlmsg/files/Documents/crash-logs/
+  adb pull /sdcard/Android/data/com.donlocke.andflmsg/files/Documents/crash-logs/
   ```
 
   On some Android 11 builds adb may still report `Permission denied` for
   `Android/data`; on debuggable builds, use
-  `adb shell run-as com.AndFlmsg ls files/crash-logs` instead.
+  `adb shell run-as com.donlocke.andflmsg ls files/crash-logs` instead.
 
 If external storage is unavailable or cannot be written, logs fall back to the
 app-private files directory, which is only reachable on debuggable builds.
