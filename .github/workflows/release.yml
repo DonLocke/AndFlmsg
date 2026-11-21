@@ -31,7 +31,7 @@ jobs:
       ANDFLMSG_SKIP_IMAGE_BUILD: "1"
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Resolve and validate version
         id: version
@@ -66,10 +66,10 @@ jobs:
           echo "Expected tag: $expected_tag"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -79,7 +79,7 @@ jobs:
             gradle-${{ runner.os }}-
 
       - name: Build container image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: container
           file: container/Containerfile
@@ -133,7 +133,7 @@ jobs:
           (cd release && sha256sum "$apk_name" > "$apk_name.sha256" && sha256sum -c "$apk_name.sha256")
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: andflmsg-release-${{ steps.version.outputs.version_name }}
           path: release/*
