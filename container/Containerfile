@@ -60,7 +60,7 @@ RUN yes | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses >/dev/null \
         "ndk;${ANDROID_NDK}" \
     && rm -rf "${HOME}/.android/cache"
 
-ENV PATH="${ANDROID_NDK_HOME}:${PATH}"
+ENV PATH="${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS}:${ANDROID_NDK_HOME}:${PATH}"
 
 WORKDIR /workspace
 

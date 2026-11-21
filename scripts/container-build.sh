@@ -39,8 +39,11 @@ if ! command -v "${ENGINE}" >/dev/null 2>&1; then
 fi
 
 # Layer caching makes this cheap when nothing changed, and it guarantees the
-# image matches the Containerfile.
-"${ENGINE}" build -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
+# image matches the Containerfile. CI prebuilds the image with a remote layer
+# cache and sets ANDFLMSG_SKIP_IMAGE_BUILD=1 so this step is skipped there.
+if [ "${ANDFLMSG_SKIP_IMAGE_BUILD:-0}" != "1" ]; then
+    "${ENGINE}" build -t "${IMAGE}" -f "${CONTAINERFILE}" "${ROOT_DIR}/container"
+fi
 
 mkdir -p "${HOME}/.gradle" "${HOME}/.android"
 
@@ -82,11 +85,29 @@ RUN_ARGS=(
     -v "${ROOT_DIR}:/workspace${WORKSPACE_SUFFIX}"
     -v "${HOME}/.gradle:/gradle-cache${CACHE_SUFFIX}"
     # Persist the Android user home so the debug keystore stays stable across
-    # debug builds. Release signing is not configured here; see
-    # container/README.md.
+    # debug builds. The release keystore is supplied separately; see
+    # docs/RELEASING.md.
     -v "${HOME}/.android:/tmp/.android${CACHE_SUFFIX}"
     -w /workspace
 )
+
+# Optional extra bind mount in HOST:CONTAINER form. CI uses this to expose
+# $RUNNER_TEMP so the release keystore never touches the workspace.
+if [ -n "${ANDFLMSG_EXTRA_VOLUME:-}" ]; then
+    RUN_ARGS+=(-v "${ANDFLMSG_EXTRA_VOLUME}${CACHE_SUFFIX}")
+fi
+
+# Forward release signing variables that are present. Debug builds are
+# unaffected, and release tasks still fail closed if any value is missing.
+for signing_var in \
+    ANDROID_KEYSTORE_PATH \
+    ANDROID_KEYSTORE_PASSWORD \
+    ANDROID_KEY_ALIAS \
+    ANDROID_KEY_PASSWORD; do
+    if [ -n "${!signing_var:-}" ]; then
+        RUN_ARGS+=(-e "${signing_var}")
+    fi
+done
 
 # Rootful Docker runs as the invoking UID/GID. Rootless Docker maps container
 # root to the invoking user, and Podman uses keep-id below, so neither needs an

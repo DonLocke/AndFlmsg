@@ -35,7 +35,6 @@
         android:layout_width="fill_parent"
         android:layout_height="18dp"
         android:layout_weight="0.01" >
-        android:weightSum="1" >
         <CheckBox
             android:id="@+id/rxrsid"
             android:layout_width="wrap_content"
@@ -55,7 +54,6 @@
 		android:layout_width="fill_parent"
 		android:layout_height="22dp"
 		android:layout_weight="0.01" >
-		android:weightSum="1" >
 		<TextView
 			android:id="@+id/volumetext"
 			android:layout_width="fill_parent"

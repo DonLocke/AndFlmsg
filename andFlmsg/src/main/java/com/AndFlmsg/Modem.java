@@ -15,6 +15,7 @@
 
 package com.AndFlmsg;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.*;
@@ -635,6 +636,9 @@ public class Modem {
     }
 
 
+    // The caller checks RECORD_AUDIO before starting the modem. Lint cannot
+    // follow that path, so suppress the local false positive.
+    @SuppressLint("MissingPermission")
     private static void soundInInit() {
         bufferSize = (int) sampleRate; // 1 second of Audio max
         if (bufferSize < AudioRecord.getMinBufferSize((int) sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)) {
@@ -1310,7 +1314,7 @@ public class Modem {
             if (connection == null && AndFlmsg.usbPermission == AndFlmsg.UsbPermission.Unknown && !manager.hasPermission(driver.getDevice())) {
                 //Debug Processor.PostToModem("Requesting permission");
                 AndFlmsg.usbPermission = AndFlmsg.UsbPermission.Requested;
-                PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(AndFlmsg.myContext, 0, new Intent(AndFlmsg.INTENT_ACTION_GRANT_USB), 0);
+                PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(AndFlmsg.myContext, 0, new Intent(AndFlmsg.INTENT_ACTION_GRANT_USB), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 manager.requestPermission(driver.getDevice(), usbPermissionIntent);
                 return;
             }

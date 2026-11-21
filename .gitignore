@@ -4,6 +4,10 @@
 keystore.properties
 *.jks
 *.keystore
+*.p12
+*.jks.b64
+*.keystore.b64
+*.p12.b64
 /.idea/workspace.xml
 /.idea/libraries
 .idea
